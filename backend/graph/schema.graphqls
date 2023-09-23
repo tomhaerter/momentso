@@ -1,0 +1,37 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+type User {
+  id: ID!
+  email: String!
+}
+
+type TimeEntry {
+  id: ID!
+  description: String
+  createdBy: User!
+  createdAt: Time!
+  startedAt: Time!
+  completedAt: Time
+}
+
+type Query {
+  me: User!
+  timeEntries: [TimeEntry!]!
+  timeEntry(id: ID!): TimeEntry
+}
+
+input CreateTimeEntryInput {
+  startedAt: Time
+  description: String
+}
+
+type Mutation {
+  createTimeEntry(input: CreateTimeEntryInput): TimeEntry!
+  upTimeTimeEntry(id: ID!, startedAt: Time, description: String): TimeEntry!
+  completeTimeEntry(id: ID!): TimeEntry!
+  deleteTimeEntry(id: ID!): TimeEntry!
+}
