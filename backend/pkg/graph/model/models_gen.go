@@ -4,9 +4,21 @@ package model
 
 import (
 	"time"
+
+	"github.com/openmomentso/momentso/pkg/database/db"
 )
 
 type CreateTimeEntryInput struct {
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	Description *string    `json:"description,omitempty"`
+}
+
+type SignInPayload struct {
+	Token string  `json:"token"`
+	User  db.User `json:"user"`
+}
+
+type SignUpPayload struct {
+	Token string  `json:"token"`
+	User  db.User `json:"user"`
 }
