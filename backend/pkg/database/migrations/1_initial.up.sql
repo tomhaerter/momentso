@@ -1,17 +1,17 @@
-CREATE TABLE workspaces
+create table workspaces
 (
-    id         bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name       text        NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now()
+    id         bigint primary key generated always as identity,
+    name       text        not null,
+    created_at timestamptz not null default now()
 );
 
-CREATE TABLE users
+create table users
 (
-    id           bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    email        text        NOT NULL UNIQUE,
-    password     text        NOT NULL,
-    workspace_id bigint REFERENCES workspaces (id),
-    created_at   timestamptz NOT NULL DEFAULT now()
+    id           bigint primary key generated always as identity,
+    email        text        not null unique,
+    password     text        not null,
+    workspace_id bigint references workspaces (id),
+    created_at   timestamptz not null default now()
 );
 
 create table sessions
@@ -22,32 +22,32 @@ create table sessions
     created_at timestamptz not null default now()
 );
 
-CREATE TABLE clients
+create table clients
 (
-    id           bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name         text        NOT NULL,
-    workspace_id bigint REFERENCES workspaces (id),
-    created_at   timestamptz NOT NULL DEFAULT now()
+    id           bigint primary key generated always as identity,
+    name         text        not null,
+    workspace_id bigint references workspaces (id),
+    created_at   timestamptz not null default now()
 );
 
-CREATE TABLE projects
+create table projects
 (
-    id           bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name         text        NOT NULL,
-    color        text        NOT NULL DEFAULT 'gray',
-    client_id    bigint REFERENCES clients (id),
-    workspace_id bigint REFERENCES workspaces (id),
-    created_at   timestamptz NOT NULL DEFAULT now()
+    id           bigint primary key generated always as identity,
+    name         text        not null,
+    color        text        not null default 'gray',
+    client_id    bigint references clients (id),
+    workspace_id bigint references workspaces (id),
+    created_at   timestamptz not null default now()
 );
 
-CREATE TABLE time_entries
+create table time_entries
 (
-    id           bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    description  text        NOT NULL,
-    workspace_id bigint REFERENCES workspaces (id),
-    created_by   bigint      not null REFERENCES users (id),
-    created_at   timestamptz NOT NULL DEFAULT now(),
-    started_at   timestamptz NOT NULL DEFAULT now(),
+    id           bigint primary key generated always as identity,
+    description  text        not null,
+    workspace_id bigint references workspaces (id),
+    created_by   bigint      not null references users (id),
+    created_at   timestamptz not null default now(),
+    started_at   timestamptz not null default now(),
     completed_at timestamptz,
     CHECK (completed_at > started_at)
 );

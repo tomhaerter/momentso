@@ -10,7 +10,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database"
 	"github.com/openmomentso/momentso/pkg/database/db"
@@ -67,7 +67,6 @@ func (r *mutationResolver) UpdateTimeEntry(ctx context.Context, id int64, input 
 			update = update.Set("completed_at", value)
 		}
 	}
-	update.ToSql()
 
 	updatedEntry, err := database.ScanUpdateOne[db.TimeEntry](r.DB, ctx, update)
 	return &model.UpdateTimeEntryPayload{
@@ -104,6 +103,22 @@ func (r *queryResolver) TimeEntry(ctx context.Context, id int64) (*db.TimeEntry,
 		CreatedBy: user.ID,
 	})
 	return &entry, err
+}
+
+// RunningTimeEntry is the resolver for the runningTimeEntry field.
+func (r *queryResolver) RunningTimeEntry(ctx context.Context) (*db.TimeEntry, error) {
+	user, ok := auth.UserForCtx(ctx)
+	if !ok {
+		return nil, errors.New("unauthorized")
+	}
+
+	entry, err := r.DB.TimeEntryFindRunning(ctx, user.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &entry, nil
 }
 
 // Query returns QueryResolver implementation.

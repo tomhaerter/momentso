@@ -1,7 +1,4 @@
-type Query {
-    timeEntries: TimeEntryConnection!
-    timeEntry(id: ID!): TimeEntry!
-}
+
 
 input CreateTimeEntryInput {
     description: String!
@@ -14,11 +11,6 @@ input UpdateTimeEntryInput {
     completedAt: Time
 }
 
-extend type Mutation {
-    createTimeEntry(input: CreateTimeEntryInput!): CreateTimeEntryPayload!
-    updateTimeEntry(id: ID!, input: UpdateTimeEntryInput!): UpdateTimeEntryPayload!
-}
-
 type CreateTimeEntryPayload {
     timeEntry: TimeEntry!
 }
@@ -29,4 +21,16 @@ type UpdateTimeEntryPayload {
 
 type TimeEntryConnection {
     edges: [TimeEntry!]!
+}
+
+
+type Query {
+    timeEntries: TimeEntryConnection!
+    timeEntry(id: ID!): TimeEntry!
+    runningTimeEntry: TimeEntry
+}
+
+extend type Mutation {
+    createTimeEntry(input: CreateTimeEntryInput!): CreateTimeEntryPayload!
+    updateTimeEntry(id: ID!, input: UpdateTimeEntryInput!): UpdateTimeEntryPayload!
 }

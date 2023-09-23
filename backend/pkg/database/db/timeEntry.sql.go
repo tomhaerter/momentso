@@ -90,3 +90,22 @@ func (q *Queries) TimeEntryFindById(ctx context.Context, arg TimeEntryFindByIdPa
 	)
 	return i, err
 }
+
+const timeEntryFindRunning = `-- name: TimeEntryFindRunning :one
+select id, description, workspace_id, created_by, created_at, started_at, completed_at from time_entries where created_by = $1 and completed_at is null limit 1
+`
+
+func (q *Queries) TimeEntryFindRunning(ctx context.Context, createdBy int64) (TimeEntry, error) {
+	row := q.db.QueryRow(ctx, timeEntryFindRunning, createdBy)
+	var i TimeEntry
+	err := row.Scan(
+		&i.ID,
+		&i.Description,
+		&i.WorkspaceID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+	)
+	return i, err
+}

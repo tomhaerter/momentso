@@ -62,9 +62,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Me          func(childComplexity int) int
-		TimeEntries func(childComplexity int) int
-		TimeEntry   func(childComplexity int, id int64) int
+		Me               func(childComplexity int) int
+		RunningTimeEntry func(childComplexity int) int
+		TimeEntries      func(childComplexity int) int
+		TimeEntry        func(childComplexity int, id int64) int
 	}
 
 	SignInPayload struct {
@@ -109,6 +110,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	TimeEntries(ctx context.Context) (*model.TimeEntryConnection, error)
 	TimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
+	RunningTimeEntry(ctx context.Context) (*db.TimeEntry, error)
 	Me(ctx context.Context) (*db.User, error)
 }
 type TimeEntryResolver interface {
@@ -196,6 +198,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Me(childComplexity), true
+
+	case "Query.runningTimeEntry":
+		if e.complexity.Query.RunningTimeEntry == nil {
+			break
+		}
+
+		return e.complexity.Query.RunningTimeEntry(childComplexity), true
 
 	case "Query.timeEntries":
 		if e.complexity.Query.TimeEntries == nil {
@@ -1007,6 +1016,61 @@ func (ec *executionContext) fieldContext_Query_timeEntry(ctx context.Context, fi
 	if fc.Args, err = ec.field_Query_timeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_runningTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_runningTimeEntry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RunningTimeEntry(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*db.TimeEntry)
+	fc.Result = res
+	return ec.marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_runningTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TimeEntry_id(ctx, field)
+			case "description":
+				return ec.fieldContext_TimeEntry_description(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -3837,6 +3901,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "runningTimeEntry":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_runningTimeEntry(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "me":
 			field := field
 
@@ -5107,6 +5190,13 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TimeEntry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
