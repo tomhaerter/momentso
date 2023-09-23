@@ -7,9 +7,10 @@ package graph
 import (
 	"context"
 	"fmt"
-	"momentso/db"
-	"momentso/graph/model"
 	"time"
+
+	"github.com/openmomentso/momentso/pkg/database/db"
+	"github.com/openmomentso/momentso/pkg/graph/model"
 )
 
 // CreateTimeEntry is the resolver for the createTimeEntry field.
@@ -18,17 +19,17 @@ func (r *mutationResolver) CreateTimeEntry(ctx context.Context, input *model.Cre
 }
 
 // UpTimeTimeEntry is the resolver for the upTimeTimeEntry field.
-func (r *mutationResolver) UpTimeTimeEntry(ctx context.Context, id string, startedAt *time.Time, description *string) (*db.TimeEntry, error) {
+func (r *mutationResolver) UpTimeTimeEntry(ctx context.Context, id int64, startedAt *time.Time, description *string) (*db.TimeEntry, error) {
 	panic(fmt.Errorf("not implemented: UpTimeTimeEntry - upTimeTimeEntry"))
 }
 
 // CompleteTimeEntry is the resolver for the completeTimeEntry field.
-func (r *mutationResolver) CompleteTimeEntry(ctx context.Context, id string) (*db.TimeEntry, error) {
+func (r *mutationResolver) CompleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
 	panic(fmt.Errorf("not implemented: CompleteTimeEntry - completeTimeEntry"))
 }
 
 // DeleteTimeEntry is the resolver for the deleteTimeEntry field.
-func (r *mutationResolver) DeleteTimeEntry(ctx context.Context, id string) (*db.TimeEntry, error) {
+func (r *mutationResolver) DeleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
 	panic(fmt.Errorf("not implemented: DeleteTimeEntry - deleteTimeEntry"))
 }
 
@@ -39,13 +40,11 @@ func (r *queryResolver) Me(ctx context.Context) (*db.User, error) {
 
 // TimeEntries is the resolver for the timeEntries field.
 func (r *queryResolver) TimeEntries(ctx context.Context) ([]db.TimeEntry, error) {
-	entries, err := r.DB.ListTimeEntries(ctx)
-
-	return entries, err
+	panic(fmt.Errorf("not implemented: TimeEntries - timeEntries"))
 }
 
 // TimeEntry is the resolver for the timeEntry field.
-func (r *queryResolver) TimeEntry(ctx context.Context, id string) (*db.TimeEntry, error) {
+func (r *queryResolver) TimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
 	panic(fmt.Errorf("not implemented: TimeEntry - timeEntry"))
 }
 

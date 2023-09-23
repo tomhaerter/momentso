@@ -8,8 +8,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"momentso/db"
-	"momentso/graph/model"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -17,6 +15,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/openmomentso/momentso/pkg/database/db"
+	"github.com/openmomentso/momentso/pkg/graph/model"
+	"github.com/openmomentso/momentso/pkg/helper"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -49,16 +50,28 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CompleteTimeEntry func(childComplexity int, id string) int
+		CompleteTimeEntry func(childComplexity int, id int64) int
 		CreateTimeEntry   func(childComplexity int, input *model.CreateTimeEntryInput) int
-		DeleteTimeEntry   func(childComplexity int, id string) int
-		UpTimeTimeEntry   func(childComplexity int, id string, startedAt *time.Time, description *string) int
+		DeleteTimeEntry   func(childComplexity int, id int64) int
+		SignIn            func(childComplexity int, email string, password string) int
+		SignUp            func(childComplexity int, email string, password string) int
+		UpTimeTimeEntry   func(childComplexity int, id int64, startedAt *time.Time, description *string) int
 	}
 
 	Query struct {
 		Me          func(childComplexity int) int
 		TimeEntries func(childComplexity int) int
-		TimeEntry   func(childComplexity int, id string) int
+		TimeEntry   func(childComplexity int, id int64) int
+	}
+
+	SignInPayload struct {
+		Token func(childComplexity int) int
+		User  func(childComplexity int) int
+	}
+
+	SignUpPayload struct {
+		Token func(childComplexity int) int
+		User  func(childComplexity int) int
 	}
 
 	TimeEntry struct {
@@ -78,14 +91,16 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTimeEntry(ctx context.Context, input *model.CreateTimeEntryInput) (*db.TimeEntry, error)
-	UpTimeTimeEntry(ctx context.Context, id string, startedAt *time.Time, description *string) (*db.TimeEntry, error)
-	CompleteTimeEntry(ctx context.Context, id string) (*db.TimeEntry, error)
-	DeleteTimeEntry(ctx context.Context, id string) (*db.TimeEntry, error)
+	UpTimeTimeEntry(ctx context.Context, id int64, startedAt *time.Time, description *string) (*db.TimeEntry, error)
+	CompleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
+	DeleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
+	SignIn(ctx context.Context, email string, password string) (*model.SignInPayload, error)
+	SignUp(ctx context.Context, email string, password string) (*model.SignUpPayload, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*db.User, error)
 	TimeEntries(ctx context.Context) ([]db.TimeEntry, error)
-	TimeEntry(ctx context.Context, id string) (*db.TimeEntry, error)
+	TimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
 }
 type TimeEntryResolver interface {
 	CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error)
@@ -118,7 +133,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CompleteTimeEntry(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.CompleteTimeEntry(childComplexity, args["id"].(int64)), true
 
 	case "Mutation.createTimeEntry":
 		if e.complexity.Mutation.CreateTimeEntry == nil {
@@ -142,7 +157,31 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteTimeEntry(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.DeleteTimeEntry(childComplexity, args["id"].(int64)), true
+
+	case "Mutation.signIn":
+		if e.complexity.Mutation.SignIn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_signIn_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SignIn(childComplexity, args["email"].(string), args["password"].(string)), true
+
+	case "Mutation.signUp":
+		if e.complexity.Mutation.SignUp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_signUp_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SignUp(childComplexity, args["email"].(string), args["password"].(string)), true
 
 	case "Mutation.upTimeTimeEntry":
 		if e.complexity.Mutation.UpTimeTimeEntry == nil {
@@ -154,7 +193,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpTimeTimeEntry(childComplexity, args["id"].(string), args["startedAt"].(*time.Time), args["description"].(*string)), true
+		return e.complexity.Mutation.UpTimeTimeEntry(childComplexity, args["id"].(int64), args["startedAt"].(*time.Time), args["description"].(*string)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -180,7 +219,35 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.TimeEntry(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.TimeEntry(childComplexity, args["id"].(int64)), true
+
+	case "SignInPayload.token":
+		if e.complexity.SignInPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.SignInPayload.Token(childComplexity), true
+
+	case "SignInPayload.user":
+		if e.complexity.SignInPayload.User == nil {
+			break
+		}
+
+		return e.complexity.SignInPayload.User(childComplexity), true
+
+	case "SignUpPayload.token":
+		if e.complexity.SignUpPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.SignUpPayload.Token(childComplexity), true
+
+	case "SignUpPayload.user":
+		if e.complexity.SignUpPayload.User == nil {
+			break
+		}
+
+		return e.complexity.SignUpPayload.User(childComplexity), true
 
 	case "TimeEntry.completedAt":
 		if e.complexity.TimeEntry.CompletedAt == nil {
@@ -343,7 +410,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "schema.graphqls"
+//go:embed "auth.graphqls" "schema.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -355,6 +422,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "auth.graphqls", Input: sourceData("auth.graphqls"), BuiltIn: false},
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -366,10 +434,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_completeTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int64
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -384,7 +452,7 @@ func (ec *executionContext) field_Mutation_createTimeEntry_args(ctx context.Cont
 	var arg0 *model.CreateTimeEntryInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOCreateTimeEntryInput2ᚖmomentsoᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx, tmp)
+		arg0, err = ec.unmarshalOCreateTimeEntryInput2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -396,10 +464,10 @@ func (ec *executionContext) field_Mutation_createTimeEntry_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_deleteTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int64
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -408,13 +476,61 @@ func (ec *executionContext) field_Mutation_deleteTimeEntry_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_upTimeTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_signIn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_upTimeTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int64
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -459,10 +575,10 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_timeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int64
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -537,7 +653,7 @@ func (ec *executionContext) _Mutation_createTimeEntry(ctx context.Context, field
 	}
 	res := resTmp.(*db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -592,7 +708,7 @@ func (ec *executionContext) _Mutation_upTimeTimeEntry(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpTimeTimeEntry(rctx, fc.Args["id"].(string), fc.Args["startedAt"].(*time.Time), fc.Args["description"].(*string))
+		return ec.resolvers.Mutation().UpTimeTimeEntry(rctx, fc.Args["id"].(int64), fc.Args["startedAt"].(*time.Time), fc.Args["description"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -606,7 +722,7 @@ func (ec *executionContext) _Mutation_upTimeTimeEntry(ctx context.Context, field
 	}
 	res := resTmp.(*db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_upTimeTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -661,7 +777,7 @@ func (ec *executionContext) _Mutation_completeTimeEntry(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CompleteTimeEntry(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Mutation().CompleteTimeEntry(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -675,7 +791,7 @@ func (ec *executionContext) _Mutation_completeTimeEntry(ctx context.Context, fie
 	}
 	res := resTmp.(*db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_completeTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -730,7 +846,7 @@ func (ec *executionContext) _Mutation_deleteTimeEntry(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTimeEntry(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Mutation().DeleteTimeEntry(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -744,7 +860,7 @@ func (ec *executionContext) _Mutation_deleteTimeEntry(ctx context.Context, field
 	}
 	res := resTmp.(*db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -785,6 +901,128 @@ func (ec *executionContext) fieldContext_Mutation_deleteTimeEntry(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_signIn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SignIn(rctx, fc.Args["email"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SignInPayload)
+	fc.Result = res
+	return ec.marshalNSignInPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignInPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_signIn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "token":
+				return ec.fieldContext_SignInPayload_token(ctx, field)
+			case "user":
+				return ec.fieldContext_SignInPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignInPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_signIn_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_signUp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SignUp(rctx, fc.Args["email"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SignUpPayload)
+	fc.Result = res
+	return ec.marshalNSignUpPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignUpPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_signUp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "token":
+				return ec.fieldContext_SignUpPayload_token(ctx, field)
+			case "user":
+				return ec.fieldContext_SignUpPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignUpPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_signUp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_me(ctx, field)
 	if err != nil {
@@ -813,7 +1051,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖmomentsoᚋdbᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -863,7 +1101,7 @@ func (ec *executionContext) _Query_timeEntries(ctx context.Context, field graphq
 	}
 	res := resTmp.([]db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚕmomentsoᚋdbᚐTimeEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2ᚕgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_timeEntries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -907,7 +1145,7 @@ func (ec *executionContext) _Query_timeEntry(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TimeEntry(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().TimeEntry(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -918,7 +1156,7 @@ func (ec *executionContext) _Query_timeEntry(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*db.TimeEntry)
 	fc.Result = res
-	return ec.marshalOTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_timeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1088,6 +1326,194 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _SignInPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.SignInPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignInPayload_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignInPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignInPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignInPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.SignInPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignInPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(db.User)
+	fc.Result = res
+	return ec.marshalNUser2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignInPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignInPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignUpPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.SignUpPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignUpPayload_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignUpPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignUpPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignUpPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.SignUpPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignUpPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(db.User)
+	fc.Result = res
+	return ec.marshalNUser2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignUpPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignUpPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TimeEntry_id(ctx context.Context, field graphql.CollectedField, obj *db.TimeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TimeEntry_id(ctx, field)
 	if err != nil {
@@ -1201,7 +1627,7 @@ func (ec *executionContext) _TimeEntry_createdBy(ctx context.Context, field grap
 	}
 	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖmomentsoᚋdbᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TimeEntry_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3306,6 +3732,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "signIn":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_signIn(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signUp":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_signUp(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3419,6 +3859,94 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signInPayloadImplementors = []string{"SignInPayload"}
+
+func (ec *executionContext) _SignInPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SignInPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signInPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignInPayload")
+		case "token":
+			out.Values[i] = ec._SignInPayload_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._SignInPayload_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signUpPayloadImplementors = []string{"SignUpPayload"}
+
+func (ec *executionContext) _SignUpPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SignUpPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signUpPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignUpPayload")
+		case "token":
+			out.Values[i] = ec._SignUpPayload_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._SignUpPayload_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3948,12 +4476,12 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 }
 
 func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v interface{}) (int64, error) {
-	res, err := graphql.UnmarshalInt64(v)
+	res, err := helper.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNID2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
-	res := graphql.MarshalInt64(v)
+	res := helper.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3962,19 +4490,32 @@ func (ec *executionContext) marshalNID2int64(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNSignInPayload2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignInPayload(ctx context.Context, sel ast.SelectionSet, v model.SignInPayload) graphql.Marshaler {
+	return ec._SignInPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
-	if res == graphql.Null {
+func (ec *executionContext) marshalNSignInPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignInPayload(ctx context.Context, sel ast.SelectionSet, v *model.SignInPayload) graphql.Marshaler {
+	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
+		return graphql.Null
 	}
-	return res
+	return ec._SignInPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignUpPayload2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignUpPayload(ctx context.Context, sel ast.SelectionSet, v model.SignUpPayload) graphql.Marshaler {
+	return ec._SignUpPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSignUpPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐSignUpPayload(ctx context.Context, sel ast.SelectionSet, v *model.SignUpPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignUpPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -4007,11 +4548,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTimeEntry2momentsoᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v db.TimeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNTimeEntry2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v db.TimeEntry) graphql.Marshaler {
 	return ec._TimeEntry(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTimeEntry2ᚕmomentsoᚋdbᚐTimeEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []db.TimeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNTimeEntry2ᚕgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []db.TimeEntry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4035,7 +4576,7 @@ func (ec *executionContext) marshalNTimeEntry2ᚕmomentsoᚋdbᚐTimeEntryᚄ(ct
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTimeEntry2momentsoᚋdbᚐTimeEntry(ctx, sel, v[i])
+			ret[i] = ec.marshalNTimeEntry2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4055,7 +4596,7 @@ func (ec *executionContext) marshalNTimeEntry2ᚕmomentsoᚋdbᚐTimeEntryᚄ(ct
 	return ret
 }
 
-func (ec *executionContext) marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4065,11 +4606,11 @@ func (ec *executionContext) marshalNTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx c
 	return ec._TimeEntry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUser2momentsoᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v db.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v db.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖmomentsoᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v *db.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v *db.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4358,7 +4899,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOCreateTimeEntryInput2ᚖmomentsoᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx context.Context, v interface{}) (*model.CreateTimeEntryInput, error) {
+func (ec *executionContext) unmarshalOCreateTimeEntryInput2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx context.Context, v interface{}) (*model.CreateTimeEntryInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4408,7 +4949,7 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOTimeEntry2ᚖmomentsoᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

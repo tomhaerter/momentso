@@ -1,3 +1,5 @@
+drop table if exists workspaces, users, sessions, clients, projects, time_entries cascade;
+
 CREATE TABLE workspaces
 (
     id         bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -12,6 +14,14 @@ CREATE TABLE users
     password     text        NOT NULL,
     workspace_id bigint REFERENCES workspaces (id),
     created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+create table sessions
+(
+    id         bigint primary key generated always as identity,
+    user_id    bigint      not null references users (id),
+    token      text        not null unique,
+    created_at timestamptz not null default now()
 );
 
 CREATE TABLE clients
