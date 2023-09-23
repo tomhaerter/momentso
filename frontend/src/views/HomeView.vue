@@ -1,7 +1,12 @@
 <template>
-  <main>
-    <h1 class="text-3xl font-bold underline">
-      Hello world!
-    </h1>
-  </main>
+  <div class="flex gap-4 flex-col">
+    <NewTimeEntry></NewTimeEntry>
+
+    <TimeEntries></TimeEntries>
+  </div>
 </template>
+
+<script lang="ts" setup>
+import NewTimeEntry from '@/components/NewTimeEntry.vue';
+import TimeEntries from '@/components/TimeEntries.vue';
+</script>
