@@ -9,8 +9,12 @@ import (
 )
 
 type CreateTimeEntryInput struct {
+	Description string     `json:"description"`
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
-	Description *string    `json:"description,omitempty"`
+}
+
+type CreateTimeEntryPayload struct {
+	TimeEntry db.TimeEntry `json:"timeEntry"`
 }
 
 type SignInPayload struct {
@@ -21,4 +25,12 @@ type SignInPayload struct {
 type SignUpPayload struct {
 	Token string  `json:"token"`
 	User  db.User `json:"user"`
+}
+
+type TimeEntryConnection struct {
+	Edges []db.TimeEntry `json:"edges"`
+}
+
+type UpdateTimeEntryPayload struct {
+	TimeEntry db.TimeEntry `json:"timeEntry"`
 }

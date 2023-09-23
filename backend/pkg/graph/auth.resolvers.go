@@ -6,12 +6,13 @@ package graph
 
 import (
 	"context"
+	"errors"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"golang.org/x/crypto/bcrypt"
-
+	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database/db"
 	"github.com/openmomentso/momentso/pkg/graph/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // SignIn is the resolver for the signIn field.
@@ -70,3 +71,17 @@ func (r *mutationResolver) SignUp(ctx context.Context, email string, password st
 		Token: token,
 	}, nil
 }
+
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*db.User, error) {
+	user, ok := auth.UserForCtx(ctx)
+	if !ok {
+		return nil, errors.New("unauthorized")
+	}
+	return &user, nil
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+type mutationResolver struct{ *Resolver }

@@ -9,64 +9,41 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database/db"
-	"github.com/openmomentso/momentso/pkg/graph/model"
 )
-
-// CreateTimeEntry is the resolver for the createTimeEntry field.
-func (r *mutationResolver) CreateTimeEntry(ctx context.Context, input *model.CreateTimeEntryInput) (*db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: CreateTimeEntry - createTimeEntry"))
-}
-
-// UpTimeTimeEntry is the resolver for the upTimeTimeEntry field.
-func (r *mutationResolver) UpTimeTimeEntry(ctx context.Context, id int64, startedAt *time.Time, description *string) (*db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: UpTimeTimeEntry - upTimeTimeEntry"))
-}
-
-// CompleteTimeEntry is the resolver for the completeTimeEntry field.
-func (r *mutationResolver) CompleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: CompleteTimeEntry - completeTimeEntry"))
-}
-
-// DeleteTimeEntry is the resolver for the deleteTimeEntry field.
-func (r *mutationResolver) DeleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: DeleteTimeEntry - deleteTimeEntry"))
-}
-
-// Me is the resolver for the me field.
-func (r *queryResolver) Me(ctx context.Context) (*db.User, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
-}
-
-// TimeEntries is the resolver for the timeEntries field.
-func (r *queryResolver) TimeEntries(ctx context.Context) ([]db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: TimeEntries - timeEntries"))
-}
-
-// TimeEntry is the resolver for the timeEntry field.
-func (r *queryResolver) TimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error) {
-	panic(fmt.Errorf("not implemented: TimeEntry - timeEntry"))
-}
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *timeEntryResolver) CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error) {
-	panic(fmt.Errorf("not implemented: CreatedBy - createdBy"))
+	// todo: loader
+	user, err := r.DB.UserFindById(ctx, obj.CreatedBy)
+	return &user, err
 }
 
 // CompletedAt is the resolver for the completedAt field.
 func (r *timeEntryResolver) CompletedAt(ctx context.Context, obj *db.TimeEntry) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: CompletedAt - completedAt"))
+	if obj.CompletedAt.Valid {
+		return &obj.CompletedAt.Time, nil
+	}
+
+	return nil, nil
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// Email is the resolver for the email field.
+func (r *userResolver) Email(ctx context.Context, obj *db.User) (string, error) {
+	user, _ := auth.UserForCtx(ctx)
+	if user.ID != obj.ID {
+		return "", fmt.Errorf("unauthorized")
+	}
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+	return user.Email, nil
+}
 
 // TimeEntry returns TimeEntryResolver implementation.
 func (r *Resolver) TimeEntry() TimeEntryResolver { return &timeEntryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
 type timeEntryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

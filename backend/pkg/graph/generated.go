@@ -43,19 +43,22 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	TimeEntry() TimeEntryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CreateTimeEntryPayload struct {
+		TimeEntry func(childComplexity int) int
+	}
+
 	Mutation struct {
-		CompleteTimeEntry func(childComplexity int, id int64) int
-		CreateTimeEntry   func(childComplexity int, input *model.CreateTimeEntryInput) int
-		DeleteTimeEntry   func(childComplexity int, id int64) int
-		SignIn            func(childComplexity int, email string, password string) int
-		SignUp            func(childComplexity int, email string, password string) int
-		UpTimeTimeEntry   func(childComplexity int, id int64, startedAt *time.Time, description *string) int
+		CreateTimeEntry func(childComplexity int, input model.CreateTimeEntryInput) int
+		SignIn          func(childComplexity int, email string, password string) int
+		SignUp          func(childComplexity int, email string, password string) int
+		UpdateTimeEntry func(childComplexity int, id int64, input map[string]interface{}) int
 	}
 
 	Query struct {
@@ -83,6 +86,14 @@ type ComplexityRoot struct {
 		StartedAt   func(childComplexity int) int
 	}
 
+	TimeEntryConnection struct {
+		Edges func(childComplexity int) int
+	}
+
+	UpdateTimeEntryPayload struct {
+		TimeEntry func(childComplexity int) int
+	}
+
 	User struct {
 		Email func(childComplexity int) int
 		ID    func(childComplexity int) int
@@ -90,22 +101,23 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateTimeEntry(ctx context.Context, input *model.CreateTimeEntryInput) (*db.TimeEntry, error)
-	UpTimeTimeEntry(ctx context.Context, id int64, startedAt *time.Time, description *string) (*db.TimeEntry, error)
-	CompleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
-	DeleteTimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
 	SignIn(ctx context.Context, email string, password string) (*model.SignInPayload, error)
 	SignUp(ctx context.Context, email string, password string) (*model.SignUpPayload, error)
+	CreateTimeEntry(ctx context.Context, input model.CreateTimeEntryInput) (*model.CreateTimeEntryPayload, error)
+	UpdateTimeEntry(ctx context.Context, id int64, input map[string]interface{}) (*model.UpdateTimeEntryPayload, error)
 }
 type QueryResolver interface {
-	Me(ctx context.Context) (*db.User, error)
-	TimeEntries(ctx context.Context) ([]db.TimeEntry, error)
+	TimeEntries(ctx context.Context) (*model.TimeEntryConnection, error)
 	TimeEntry(ctx context.Context, id int64) (*db.TimeEntry, error)
+	Me(ctx context.Context) (*db.User, error)
 }
 type TimeEntryResolver interface {
 	CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error)
 
 	CompletedAt(ctx context.Context, obj *db.TimeEntry) (*time.Time, error)
+}
+type UserResolver interface {
+	Email(ctx context.Context, obj *db.User) (string, error)
 }
 
 type executableSchema struct {
@@ -123,17 +135,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.completeTimeEntry":
-		if e.complexity.Mutation.CompleteTimeEntry == nil {
+	case "CreateTimeEntryPayload.timeEntry":
+		if e.complexity.CreateTimeEntryPayload.TimeEntry == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_completeTimeEntry_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CompleteTimeEntry(childComplexity, args["id"].(int64)), true
+		return e.complexity.CreateTimeEntryPayload.TimeEntry(childComplexity), true
 
 	case "Mutation.createTimeEntry":
 		if e.complexity.Mutation.CreateTimeEntry == nil {
@@ -145,19 +152,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTimeEntry(childComplexity, args["input"].(*model.CreateTimeEntryInput)), true
-
-	case "Mutation.deleteTimeEntry":
-		if e.complexity.Mutation.DeleteTimeEntry == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteTimeEntry_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteTimeEntry(childComplexity, args["id"].(int64)), true
+		return e.complexity.Mutation.CreateTimeEntry(childComplexity, args["input"].(model.CreateTimeEntryInput)), true
 
 	case "Mutation.signIn":
 		if e.complexity.Mutation.SignIn == nil {
@@ -183,17 +178,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SignUp(childComplexity, args["email"].(string), args["password"].(string)), true
 
-	case "Mutation.upTimeTimeEntry":
-		if e.complexity.Mutation.UpTimeTimeEntry == nil {
+	case "Mutation.updateTimeEntry":
+		if e.complexity.Mutation.UpdateTimeEntry == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_upTimeTimeEntry_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateTimeEntry_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpTimeTimeEntry(childComplexity, args["id"].(int64), args["startedAt"].(*time.Time), args["description"].(*string)), true
+		return e.complexity.Mutation.UpdateTimeEntry(childComplexity, args["id"].(int64), args["input"].(map[string]interface{})), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -290,6 +285,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TimeEntry.StartedAt(childComplexity), true
+
+	case "TimeEntryConnection.edges":
+		if e.complexity.TimeEntryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TimeEntryConnection.Edges(childComplexity), true
+
+	case "UpdateTimeEntryPayload.timeEntry":
+		if e.complexity.UpdateTimeEntryPayload.TimeEntry == nil {
+			break
+		}
+
+		return e.complexity.UpdateTimeEntryPayload.TimeEntry(childComplexity), true
 
 	case "User.email":
 		if e.complexity.User.Email == nil {
@@ -410,7 +419,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "auth.graphqls" "schema.graphqls"
+//go:embed "auth.graphqls" "schema.graphqls" "timeEntry.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -424,6 +433,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "auth.graphqls", Input: sourceData("auth.graphqls"), BuiltIn: false},
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
+	{Name: "timeEntry.graphqls", Input: sourceData("timeEntry.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -431,48 +441,18 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_completeTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int64
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.CreateTimeEntryInput
+	var arg0 model.CreateTimeEntryInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOCreateTimeEntryInput2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateTimeEntryInput2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int64
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
 	return args, nil
 }
 
@@ -524,7 +504,7 @@ func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_upTimeTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateTimeEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int64
@@ -536,24 +516,15 @@ func (ec *executionContext) field_Mutation_upTimeTimeEntry_args(ctx context.Cont
 		}
 	}
 	args["id"] = arg0
-	var arg1 *time.Time
-	if tmp, ok := rawArgs["startedAt"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startedAt"))
-		arg1, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+	var arg1 map[string]interface{}
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNUpdateTimeEntryInput2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["startedAt"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["description"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["description"] = arg2
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -625,8 +596,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_createTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createTimeEntry(ctx, field)
+func (ec *executionContext) _CreateTimeEntryPayload_timeEntry(ctx context.Context, field graphql.CollectedField, obj *model.CreateTimeEntryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateTimeEntryPayload_timeEntry(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -639,7 +610,7 @@ func (ec *executionContext) _Mutation_createTimeEntry(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTimeEntry(rctx, fc.Args["input"].(*model.CreateTimeEntryInput))
+		return obj.TimeEntry, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -651,17 +622,17 @@ func (ec *executionContext) _Mutation_createTimeEntry(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*db.TimeEntry)
+	res := resTmp.(db.TimeEntry)
 	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
+	return ec.marshalNTimeEntry2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateTimeEntryPayload_timeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mutation",
+		Object:     "CreateTimeEntryPayload",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -679,224 +650,6 @@ func (ec *executionContext) fieldContext_Mutation_createTimeEntry(ctx context.Co
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_upTimeTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_upTimeTimeEntry(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpTimeTimeEntry(rctx, fc.Args["id"].(int64), fc.Args["startedAt"].(*time.Time), fc.Args["description"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*db.TimeEntry)
-	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_upTimeTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TimeEntry_id(ctx, field)
-			case "description":
-				return ec.fieldContext_TimeEntry_description(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_upTimeTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_completeTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_completeTimeEntry(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CompleteTimeEntry(rctx, fc.Args["id"].(int64))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*db.TimeEntry)
-	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_completeTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TimeEntry_id(ctx, field)
-			case "description":
-				return ec.fieldContext_TimeEntry_description(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_completeTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteTimeEntry(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTimeEntry(rctx, fc.Args["id"].(int64))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*db.TimeEntry)
-	fc.Result = res
-	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TimeEntry_id(ctx, field)
-			case "description":
-				return ec.fieldContext_TimeEntry_description(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -1023,6 +776,241 @@ func (ec *executionContext) fieldContext_Mutation_signUp(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createTimeEntry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateTimeEntry(rctx, fc.Args["input"].(model.CreateTimeEntryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CreateTimeEntryPayload)
+	fc.Result = res
+	return ec.marshalNCreateTimeEntryPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "timeEntry":
+				return ec.fieldContext_CreateTimeEntryPayload_timeEntry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateTimeEntryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateTimeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateTimeEntry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateTimeEntry(rctx, fc.Args["id"].(int64), fc.Args["input"].(map[string]interface{}))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UpdateTimeEntryPayload)
+	fc.Result = res
+	return ec.marshalNUpdateTimeEntryPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateTimeEntryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateTimeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "timeEntry":
+				return ec.fieldContext_UpdateTimeEntryPayload_timeEntry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateTimeEntryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTimeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_timeEntries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_timeEntries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().TimeEntries(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TimeEntryConnection)
+	fc.Result = res
+	return ec.marshalNTimeEntryConnection2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐTimeEntryConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_timeEntries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_TimeEntryConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TimeEntryConnection", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_timeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_timeEntry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().TimeEntry(rctx, fc.Args["id"].(int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*db.TimeEntry)
+	fc.Result = res
+	return ec.marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_timeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TimeEntry_id(ctx, field)
+			case "description":
+				return ec.fieldContext_TimeEntry_description(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_timeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_me(ctx, field)
 	if err != nil {
@@ -1069,130 +1057,6 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_timeEntries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_timeEntries(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TimeEntries(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]db.TimeEntry)
-	fc.Result = res
-	return ec.marshalNTimeEntry2ᚕgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntryᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_timeEntries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TimeEntry_id(ctx, field)
-			case "description":
-				return ec.fieldContext_TimeEntry_description(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_timeEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_timeEntry(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TimeEntry(rctx, fc.Args["id"].(int64))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*db.TimeEntry)
-	fc.Result = res
-	return ec.marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_timeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TimeEntry_id(ctx, field)
-			case "description":
-				return ec.fieldContext_TimeEntry_description(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_timeEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -1778,6 +1642,122 @@ func (ec *executionContext) fieldContext_TimeEntry_completedAt(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _TimeEntryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.TimeEntryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TimeEntryConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]db.TimeEntry)
+	fc.Result = res
+	return ec.marshalNTimeEntry2ᚕgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TimeEntryConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TimeEntryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TimeEntry_id(ctx, field)
+			case "description":
+				return ec.fieldContext_TimeEntry_description(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateTimeEntryPayload_timeEntry(ctx context.Context, field graphql.CollectedField, obj *model.UpdateTimeEntryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateTimeEntryPayload_timeEntry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TimeEntry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(db.TimeEntry)
+	fc.Result = res
+	return ec.marshalNTimeEntry2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateTimeEntryPayload_timeEntry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateTimeEntryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TimeEntry_id(ctx, field)
+			case "description":
+				return ec.fieldContext_TimeEntry_description(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_TimeEntry_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TimeEntry_createdAt(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
@@ -1836,7 +1816,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Email, nil
+		return ec.resolvers.User().Email(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1857,8 +1837,8 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -3646,13 +3626,22 @@ func (ec *executionContext) unmarshalInputCreateTimeEntryInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"startedAt", "description"}
+	fieldsInOrder := [...]string{"description", "startedAt"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
 		case "startedAt":
 			var err error
 
@@ -3662,15 +3651,6 @@ func (ec *executionContext) unmarshalInputCreateTimeEntryInput(ctx context.Conte
 				return it, err
 			}
 			it.StartedAt = data
-		case "description":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
 		}
 	}
 
@@ -3684,6 +3664,45 @@ func (ec *executionContext) unmarshalInputCreateTimeEntryInput(ctx context.Conte
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var createTimeEntryPayloadImplementors = []string{"CreateTimeEntryPayload"}
+
+func (ec *executionContext) _CreateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateTimeEntryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createTimeEntryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateTimeEntryPayload")
+		case "timeEntry":
+			out.Values[i] = ec._CreateTimeEntryPayload_timeEntry(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var mutationImplementors = []string{"Mutation"}
 
@@ -3704,34 +3723,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createTimeEntry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createTimeEntry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "upTimeTimeEntry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_upTimeTimeEntry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "completeTimeEntry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_completeTimeEntry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteTimeEntry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteTimeEntry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "signIn":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signIn(ctx, field)
@@ -3742,6 +3733,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "signUp":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signUp(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createTimeEntry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createTimeEntry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateTimeEntry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTimeEntry(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3788,28 +3793,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "me":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_me(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "timeEntries":
 			field := field
 
@@ -3842,6 +3825,31 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_timeEntry(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "me":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_me(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -4090,6 +4098,84 @@ func (ec *executionContext) _TimeEntry(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var timeEntryConnectionImplementors = []string{"TimeEntryConnection"}
+
+func (ec *executionContext) _TimeEntryConnection(ctx context.Context, sel ast.SelectionSet, obj *model.TimeEntryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, timeEntryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TimeEntryConnection")
+		case "edges":
+			out.Values[i] = ec._TimeEntryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateTimeEntryPayloadImplementors = []string{"UpdateTimeEntryPayload"}
+
+func (ec *executionContext) _UpdateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateTimeEntryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateTimeEntryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateTimeEntryPayload")
+		case "timeEntry":
+			out.Values[i] = ec._UpdateTimeEntryPayload_timeEntry(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *db.User) graphql.Marshaler {
@@ -4104,13 +4190,44 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
-			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_email(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4475,6 +4592,25 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateTimeEntryInput2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx context.Context, v interface{}) (model.CreateTimeEntryInput, error) {
+	res, err := ec.unmarshalInputCreateTimeEntryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateTimeEntryPayload2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, v model.CreateTimeEntryPayload) graphql.Marshaler {
+	return ec._CreateTimeEntryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateTimeEntryPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, v *model.CreateTimeEntryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateTimeEntryPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v interface{}) (int64, error) {
 	res, err := helper.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4604,6 +4740,38 @@ func (ec *executionContext) marshalNTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋm
 		return graphql.Null
 	}
 	return ec._TimeEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTimeEntryConnection2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐTimeEntryConnection(ctx context.Context, sel ast.SelectionSet, v model.TimeEntryConnection) graphql.Marshaler {
+	return ec._TimeEntryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTimeEntryConnection2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐTimeEntryConnection(ctx context.Context, sel ast.SelectionSet, v *model.TimeEntryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TimeEntryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateTimeEntryInput2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	return v.(map[string]interface{}), nil
+}
+
+func (ec *executionContext) marshalNUpdateTimeEntryPayload2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, v model.UpdateTimeEntryPayload) graphql.Marshaler {
+	return ec._UpdateTimeEntryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateTimeEntryPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateTimeEntryPayload(ctx context.Context, sel ast.SelectionSet, v *model.UpdateTimeEntryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateTimeEntryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v db.User) graphql.Marshaler {
@@ -4899,14 +5067,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOCreateTimeEntryInput2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐCreateTimeEntryInput(ctx context.Context, v interface{}) (*model.CreateTimeEntryInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputCreateTimeEntryInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4947,13 +5107,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOTimeEntry2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐTimeEntry(ctx context.Context, sel ast.SelectionSet, v *db.TimeEntry) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._TimeEntry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

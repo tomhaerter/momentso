@@ -47,7 +47,7 @@ CREATE TABLE time_entries
     id           bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     description  text        NOT NULL,
     workspace_id bigint REFERENCES workspaces (id),
-    created_by   bigint REFERENCES users (id),
+    created_by   bigint not null REFERENCES users (id),
     created_at   timestamptz NOT NULL DEFAULT now(),
     started_at   timestamptz NOT NULL DEFAULT now(),
     completed_at timestamptz,

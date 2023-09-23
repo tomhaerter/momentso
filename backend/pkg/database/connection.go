@@ -1,9 +1,11 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 
-	_ "github.com/lib/pq"
+	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/openmomentso/momentso/pkg/database/db"
 )
@@ -11,18 +13,39 @@ import (
 //go:generate sqlc generate
 
 type Db struct {
-	Db *sql.DB
+	Db *pgxpool.Pool
 	*db.Queries
 }
 
 func NewClient() *Db {
-	dbI, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
 
 	return &Db{
-		Db:      dbI,
-		Queries: db.New(dbI),
+		Db:      pool,
+		Queries: db.New(pool),
 	}
+}
+
+func (db *Db) NewQueryBuilder() squirrel.StatementBuilderType {
+	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+}
+
+func ScanUpdateOne[T any](dbI *Db, ctx context.Context, query squirrel.UpdateBuilder) (T, error) {
+	var t T
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return t, err
+	}
+
+	rows, err := dbI.Db.Query(ctx, sql, args...)
+	if err != nil {
+		return t, err
+	}
+
+	return pgx.CollectOneRow(rows, pgx.RowToStructByPos[T])
 }

@@ -5,53 +5,54 @@
 package db
 
 import (
-	"database/sql"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Client struct {
-	ID          int64
-	Name        string
-	WorkspaceID sql.NullInt64
-	CreatedAt   time.Time
+	ID          int64       `db:"id"`
+	Name        string      `db:"name"`
+	WorkspaceID pgtype.Int8 `db:"workspace_id"`
+	CreatedAt   time.Time   `db:"created_at"`
 }
 
 type Project struct {
-	ID          int64
-	Name        string
-	Color       string
-	ClientID    sql.NullInt64
-	WorkspaceID sql.NullInt64
-	CreatedAt   time.Time
+	ID          int64       `db:"id"`
+	Name        string      `db:"name"`
+	Color       string      `db:"color"`
+	ClientID    pgtype.Int8 `db:"client_id"`
+	WorkspaceID pgtype.Int8 `db:"workspace_id"`
+	CreatedAt   time.Time   `db:"created_at"`
 }
 
 type Session struct {
-	ID        int64
-	UserID    int64
-	Token     string
-	CreatedAt time.Time
+	ID        int64     `db:"id"`
+	UserID    int64     `db:"user_id"`
+	Token     string    `db:"token"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type TimeEntry struct {
-	ID          int64
-	Description string
-	WorkspaceID sql.NullInt64
-	CreatedBy   sql.NullInt64
-	CreatedAt   time.Time
-	StartedAt   time.Time
-	CompletedAt sql.NullTime
+	ID          int64              `db:"id"`
+	Description string             `db:"description"`
+	WorkspaceID pgtype.Int8        `db:"workspace_id"`
+	CreatedBy   int64              `db:"created_by"`
+	CreatedAt   time.Time          `db:"created_at"`
+	StartedAt   time.Time          `db:"started_at"`
+	CompletedAt pgtype.Timestamptz `db:"completed_at"`
 }
 
 type User struct {
-	ID          int64
-	Email       string
-	Password    string
-	WorkspaceID sql.NullInt64
-	CreatedAt   time.Time
+	ID          int64       `db:"id"`
+	Email       string      `db:"email"`
+	Password    string      `db:"password"`
+	WorkspaceID pgtype.Int8 `db:"workspace_id"`
+	CreatedAt   time.Time   `db:"created_at"`
 }
 
 type Workspace struct {
-	ID        int64
-	Name      string
-	CreatedAt time.Time
+	ID        int64     `db:"id"`
+	Name      string    `db:"name"`
+	CreatedAt time.Time `db:"created_at"`
 }

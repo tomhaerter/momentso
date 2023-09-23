@@ -1,12 +1,11 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+  | FIELD_DEFINITION
 
 scalar Time
 
 type User {
   id: ID!
-  email: String!
+  email: String! @goField(forceResolver: true)
 }
 
 type TimeEntry {
@@ -16,22 +15,4 @@ type TimeEntry {
   createdAt: Time!
   startedAt: Time!
   completedAt: Time
-}
-
-type Query {
-  me: User!
-  timeEntries: [TimeEntry!]!
-  timeEntry(id: ID!): TimeEntry
-}
-
-input CreateTimeEntryInput {
-  startedAt: Time
-  description: String
-}
-
-type Mutation {
-  createTimeEntry(input: CreateTimeEntryInput): TimeEntry!
-  upTimeTimeEntry(id: ID!, startedAt: Time, description: String): TimeEntry!
-  completeTimeEntry(id: ID!): TimeEntry!
-  deleteTimeEntry(id: ID!): TimeEntry!
 }

@@ -8,6 +8,10 @@ type SignUpPayload {
     user: User!
 }
 
+extend type Query {
+    me: User!
+}
+
 extend type Mutation {
     signIn(email: String!, password: String!): SignInPayload!
     signUp(email: String!, password: String!): SignUpPayload!

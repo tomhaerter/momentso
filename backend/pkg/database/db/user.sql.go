@@ -14,7 +14,7 @@ select id, description, workspace_id, created_by, created_at, started_at, comple
 `
 
 func (q *Queries) ListTimeEntries(ctx context.Context) ([]TimeEntry, error) {
-	rows, err := q.db.QueryContext(ctx, listTimeEntries)
+	rows, err := q.db.Query(ctx, listTimeEntries)
 	if err != nil {
 		return nil, err
 	}
@@ -35,9 +35,6 @@ func (q *Queries) ListTimeEntries(ctx context.Context) ([]TimeEntry, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -49,12 +46,12 @@ insert into sessions (user_id, token) values ($1, $2) returning id, user_id, tok
 `
 
 type SessionCreateParams struct {
-	UserID int64
-	Token  string
+	UserID int64  `db:"user_id"`
+	Token  string `db:"token"`
 }
 
 func (q *Queries) SessionCreate(ctx context.Context, arg SessionCreateParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, sessionCreate, arg.UserID, arg.Token)
+	row := q.db.QueryRow(ctx, sessionCreate, arg.UserID, arg.Token)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -70,12 +67,12 @@ insert into users (email, password) values ($1, $2) returning id, email, passwor
 `
 
 type UserCreateParams struct {
-	Email    string
-	Password string
+	Email    string `db:"email"`
+	Password string `db:"password"`
 }
 
 func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, userCreate, arg.Email, arg.Password)
+	row := q.db.QueryRow(ctx, userCreate, arg.Email, arg.Password)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -92,7 +89,7 @@ select id, email, password, workspace_id, created_at from users
 `
 
 func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, userFind)
+	rows, err := q.db.Query(ctx, userFind)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +108,6 @@ func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -125,7 +119,7 @@ select id, email, password, workspace_id, created_at from users where email = $1
 `
 
 func (q *Queries) UserFindByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, userFindByEmail, email)
+	row := q.db.QueryRow(ctx, userFindByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -142,7 +136,7 @@ select id, email, password, workspace_id, created_at from users where id = $1
 `
 
 func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRowContext(ctx, userFindById, id)
+	row := q.db.QueryRow(ctx, userFindById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -159,7 +153,7 @@ select id, email, password, workspace_id, created_at from users where id = (sele
 `
 
 func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, error) {
-	row := q.db.QueryRowContext(ctx, userFindBySession, token)
+	row := q.db.QueryRow(ctx, userFindBySession, token)
 	var i User
 	err := row.Scan(
 		&i.ID,
