@@ -19,6 +19,7 @@ func StartApp() {
 	defer dbI.Db.Close()
 
 	e := echo.New()
+	e.Use(middleware.CORS())
 	e.Use(middleware.Recover())
 	e.Use(auth.Middleware(dbI))
 
