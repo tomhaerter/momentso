@@ -101,6 +101,7 @@ type ComplexityRoot struct {
 		CreatedBy   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
+		Project     func(childComplexity int) int
 		StartedAt   func(childComplexity int) int
 	}
 
@@ -141,6 +142,7 @@ type TimeEntryResolver interface {
 	CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error)
 
 	CompletedAt(ctx context.Context, obj *db.TimeEntry) (*time.Time, error)
+	Project(ctx context.Context, obj *db.TimeEntry) (*db.Project, error)
 }
 type UserResolver interface {
 	Email(ctx context.Context, obj *db.User) (string, error)
@@ -377,6 +379,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TimeEntry.ID(childComplexity), true
+
+	case "TimeEntry.project":
+		if e.complexity.TimeEntry.Project == nil {
+			break
+		}
+
+		return e.complexity.TimeEntry.Project(childComplexity), true
 
 	case "TimeEntry.startedAt":
 		if e.complexity.TimeEntry.StartedAt == nil {
@@ -846,6 +855,8 @@ func (ec *executionContext) fieldContext_CreateTimeEntryPayload_timeEntry(ctx co
 				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			case "project":
+				return ec.fieldContext_TimeEntry_project(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
@@ -1494,6 +1505,8 @@ func (ec *executionContext) fieldContext_Query_timeEntry(ctx context.Context, fi
 				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			case "project":
+				return ec.fieldContext_TimeEntry_project(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
@@ -1560,6 +1573,8 @@ func (ec *executionContext) fieldContext_Query_runningTimeEntry(ctx context.Cont
 				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			case "project":
+				return ec.fieldContext_TimeEntry_project(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
@@ -2246,6 +2261,55 @@ func (ec *executionContext) fieldContext_TimeEntry_completedAt(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _TimeEntry_project(ctx context.Context, field graphql.CollectedField, obj *db.TimeEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TimeEntry_project(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TimeEntry().Project(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*db.Project)
+	fc.Result = res
+	return ec.marshalOProject2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TimeEntry_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TimeEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Project_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Project_name(ctx, field)
+			case "color":
+				return ec.fieldContext_Project_color(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TimeEntryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.TimeEntryConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TimeEntryConnection_edges(ctx, field)
 	if err != nil {
@@ -2297,6 +2361,8 @@ func (ec *executionContext) fieldContext_TimeEntryConnection_edges(ctx context.C
 				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			case "project":
+				return ec.fieldContext_TimeEntry_project(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
@@ -2407,6 +2473,8 @@ func (ec *executionContext) fieldContext_UpdateTimeEntryPayload_timeEntry(ctx co
 				return ec.fieldContext_TimeEntry_startedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_TimeEntry_completedAt(ctx, field)
+			case "project":
+				return ec.fieldContext_TimeEntry_project(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TimeEntry", field.Name)
 		},
@@ -4951,6 +5019,39 @@ func (ec *executionContext) _TimeEntry(ctx context.Context, sel ast.SelectionSet
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "project":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TimeEntry_project(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6079,6 +6180,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐProject(ctx context.Context, sel ast.SelectionSet, v *db.Project) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Project(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

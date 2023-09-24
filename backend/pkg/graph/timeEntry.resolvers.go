@@ -11,6 +11,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	pgx "github.com/jackc/pgx/v5"
+
 	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database"
 	"github.com/openmomentso/momentso/pkg/database/db"
@@ -121,7 +122,46 @@ func (r *queryResolver) RunningTimeEntry(ctx context.Context) (*db.TimeEntry, er
 	return &entry, nil
 }
 
+// CreatedBy is the resolver for the createdBy field.
+func (r *timeEntryResolver) CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error) {
+	// todo: loader
+	user, err := r.DB.UserFindById(ctx, obj.CreatedBy)
+	return &user, err
+}
+
+// CompletedAt is the resolver for the completedAt field.
+func (r *timeEntryResolver) CompletedAt(ctx context.Context, obj *db.TimeEntry) (*time.Time, error) {
+	if obj.CompletedAt.Valid {
+		return &obj.CompletedAt.Time, nil
+	}
+
+	return nil, nil
+}
+
+// Project is the resolver for the project field.
+func (r *timeEntryResolver) Project(ctx context.Context, obj *db.TimeEntry) (*db.Project, error) {
+	user, ok := auth.UserForCtx(ctx)
+	if !ok {
+		return nil, errors.New("unauthorized")
+	}
+
+	if !obj.ProjectID.Valid {
+		return nil, nil
+	}
+
+	// todo: loader
+	project, err := r.DB.ProjectFindByID(ctx, db.ProjectFindByIDParams{
+		ID:     obj.ProjectID.Int64,
+		UserID: user.ID,
+	})
+	return &project, err
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// TimeEntry returns TimeEntryResolver implementation.
+func (r *Resolver) TimeEntry() TimeEntryResolver { return &timeEntryResolver{r} }
+
 type queryResolver struct{ *Resolver }
+type timeEntryResolver struct{ *Resolver }

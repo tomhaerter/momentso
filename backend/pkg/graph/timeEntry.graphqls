@@ -1,4 +1,13 @@
+type TimeEntry {
+    id: ID!
+    description: String
+    createdBy: User!
+    createdAt: Time!
+    startedAt: Time!
+    completedAt: Time
 
+    project: Project
+}
 
 input CreateTimeEntryInput {
     description: String!

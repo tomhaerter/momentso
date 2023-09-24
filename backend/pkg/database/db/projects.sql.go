@@ -63,3 +63,26 @@ func (q *Queries) ProjectFind(ctx context.Context, userID int64) ([]Project, err
 	}
 	return items, nil
 }
+
+const projectFindByID = `-- name: ProjectFindByID :one
+select id, user_id, created_at, name, color, client_id from projects where id = $1 and user_id = $2
+`
+
+type ProjectFindByIDParams struct {
+	ID     int64 `db:"id"`
+	UserID int64 `db:"user_id"`
+}
+
+func (q *Queries) ProjectFindByID(ctx context.Context, arg ProjectFindByIDParams) (Project, error) {
+	row := q.db.QueryRow(ctx, projectFindByID, arg.ID, arg.UserID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.Name,
+		&i.Color,
+		&i.ClientID,
+	)
+	return i, err
+}

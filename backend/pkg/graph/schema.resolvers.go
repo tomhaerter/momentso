@@ -7,27 +7,10 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database/db"
 )
-
-// CreatedBy is the resolver for the createdBy field.
-func (r *timeEntryResolver) CreatedBy(ctx context.Context, obj *db.TimeEntry) (*db.User, error) {
-	// todo: loader
-	user, err := r.DB.UserFindById(ctx, obj.CreatedBy)
-	return &user, err
-}
-
-// CompletedAt is the resolver for the completedAt field.
-func (r *timeEntryResolver) CompletedAt(ctx context.Context, obj *db.TimeEntry) (*time.Time, error) {
-	if obj.CompletedAt.Valid {
-		return &obj.CompletedAt.Time, nil
-	}
-
-	return nil, nil
-}
 
 // Email is the resolver for the email field.
 func (r *userResolver) Email(ctx context.Context, obj *db.User) (string, error) {
@@ -39,11 +22,7 @@ func (r *userResolver) Email(ctx context.Context, obj *db.User) (string, error) 
 	return user.Email, nil
 }
 
-// TimeEntry returns TimeEntryResolver implementation.
-func (r *Resolver) TimeEntry() TimeEntryResolver { return &timeEntryResolver{r} }
-
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
-type timeEntryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

@@ -8,15 +8,6 @@ type User {
   email: String! @goField(forceResolver: true)
 }
 
-type TimeEntry {
-  id: ID!
-  description: String
-  createdBy: User!
-  createdAt: Time!
-  startedAt: Time!
-  completedAt: Time
-}
-
 type Project {
   id: ID!
   name: String!
