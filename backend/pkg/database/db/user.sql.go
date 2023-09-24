@@ -41,6 +41,29 @@ func (q *Queries) ListTimeEntries(ctx context.Context) ([]TimeEntry, error) {
 	return items, nil
 }
 
+const passwordResetDelete = `-- name: PasswordResetDelete :exec
+delete from password_reset_tokens where user_id = $1
+`
+
+func (q *Queries) PasswordResetDelete(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, passwordResetDelete, userID)
+	return err
+}
+
+const passwordResetSet = `-- name: PasswordResetSet :exec
+insert into password_reset_tokens (user_id, token) values ($1, $2) on conflict (user_id) do update set token = $2, created_at = now()
+`
+
+type PasswordResetSetParams struct {
+	UserID int64  `db:"user_id"`
+	Token  string `db:"token"`
+}
+
+func (q *Queries) PasswordResetSet(ctx context.Context, arg PasswordResetSetParams) error {
+	_, err := q.db.Exec(ctx, passwordResetSet, arg.UserID, arg.Token)
+	return err
+}
+
 const sessionCreate = `-- name: SessionCreate :one
 insert into sessions (user_id, token) values ($1, $2) returning id, user_id, token, created_at
 `
@@ -144,6 +167,24 @@ func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
 	return i, err
 }
 
+const userFindByPasswordResetToken = `-- name: UserFindByPasswordResetToken :one
+select u.id, u.email, u.password, u.created_at from password_reset_tokens p
+inner join users u on u.id = p.user_id
+where token = $1 and p.created_at > now() - interval '30 minutes'
+`
+
+func (q *Queries) UserFindByPasswordResetToken(ctx context.Context, token string) (User, error) {
+	row := q.db.QueryRow(ctx, userFindByPasswordResetToken, token)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const userFindBySession = `-- name: UserFindBySession :one
 select id, email, password, created_at from users where id = (select user_id from sessions where token = $1 and users.created_at > now() - interval '30 days')
 `
@@ -158,4 +199,18 @@ func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, er
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const userUpdatePassword = `-- name: UserUpdatePassword :exec
+update users set password = $2 where id = $1
+`
+
+type UserUpdatePasswordParams struct {
+	ID       int64  `db:"id"`
+	Password string `db:"password"`
+}
+
+func (q *Queries) UserUpdatePassword(ctx context.Context, arg UserUpdatePasswordParams) error {
+	_, err := q.db.Exec(ctx, userUpdatePassword, arg.ID, arg.Password)
+	return err
 }

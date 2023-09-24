@@ -7,12 +7,15 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database/db"
 	"github.com/openmomentso/momentso/pkg/graph/model"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // SignIn is the resolver for the signIn field.
@@ -72,6 +75,60 @@ func (r *mutationResolver) SignUp(ctx context.Context, email string, password st
 	}, nil
 }
 
+// RequestPasswordReset is the resolver for the requestPasswordReset field.
+func (r *mutationResolver) RequestPasswordReset(ctx context.Context, email string) (*model.RequestPasswordResetPayload, error) {
+	user, err := r.DB.UserFindByEmail(ctx, email)
+	if err != nil {
+		return &model.RequestPasswordResetPayload{}, nil
+	}
+
+	token := gonanoid.Must(64)
+	err = r.DB.PasswordResetSet(ctx, db.PasswordResetSetParams{
+		UserID: user.ID,
+		Token:  token,
+	})
+	if err != nil {
+		log.Err(err).Msg("failed to set password reset token")
+		return &model.RequestPasswordResetPayload{}, nil
+	}
+
+	err = r.Mail.SendPasswordReset(user.Email, token)
+	if err != nil {
+		log.Err(err).Msg("failed to send password reset email")
+		return &model.RequestPasswordResetPayload{}, nil
+	}
+
+	return &model.RequestPasswordResetPayload{}, nil
+}
+
+// ResetPassword is the resolver for the resetPassword field.
+func (r *mutationResolver) ResetPassword(ctx context.Context, token string, newPassword string) (*model.ResetPasswordPayload, error) {
+	user, err := r.DB.UserFindByPasswordResetToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.DB.UserUpdatePassword(ctx, db.UserUpdatePasswordParams{
+		ID:       user.ID,
+		Password: string(hash),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.DB.PasswordResetDelete(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ResetPasswordPayload{}, nil
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*db.User, error) {
 	user, ok := auth.UserForCtx(ctx)
@@ -81,7 +138,42 @@ func (r *queryResolver) Me(ctx context.Context) (*db.User, error) {
 	return &user, nil
 }
 
+// reserved is the resolver for the _ field.
+func (r *requestPasswordResetPayloadResolver) reserved(ctx context.Context, obj *model.RequestPasswordResetPayload) (interface{}, error) {
+	panic(fmt.Errorf("not implemented: reserved - _"))
+}
+
+// reserved is the resolver for the _ field.
+func (r *resetPasswordPayloadResolver) reserved(ctx context.Context, obj *model.ResetPasswordPayload) (interface{}, error) {
+	panic(fmt.Errorf("not implemented: reserved - _"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// RequestPasswordResetPayload returns RequestPasswordResetPayloadResolver implementation.
+func (r *Resolver) RequestPasswordResetPayload() RequestPasswordResetPayloadResolver {
+	return &requestPasswordResetPayloadResolver{r}
+}
+
+// ResetPasswordPayload returns ResetPasswordPayloadResolver implementation.
+func (r *Resolver) ResetPasswordPayload() ResetPasswordPayloadResolver {
+	return &resetPasswordPayloadResolver{r}
+}
+
 type mutationResolver struct{ *Resolver }
+type requestPasswordResetPayloadResolver struct{ *Resolver }
+type resetPasswordPayloadResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *requestPasswordResetPayloadResolver) _(ctx context.Context, obj *model.RequestPasswordResetPayload) (interface{}, error) {
+	panic(fmt.Errorf("not implemented: _ - _"))
+}
+func (r *resetPasswordPayloadResolver) _(ctx context.Context, obj *model.ResetPasswordPayload) (interface{}, error) {
+	panic(fmt.Errorf("not implemented: _ - _"))
+}
