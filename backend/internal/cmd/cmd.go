@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/caarlos0/env/v9"
 	"github.com/golang-migrate/migrate/v4"
 	driverPgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -20,11 +21,36 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/openmomentso/momentso/pkg/ai"
 	"github.com/openmomentso/momentso/pkg/app"
 	"github.com/openmomentso/momentso/pkg/database"
 	"github.com/openmomentso/momentso/pkg/database/db"
 	"github.com/openmomentso/momentso/pkg/database/migrations"
+	"github.com/openmomentso/momentso/pkg/email"
 )
+
+type Config struct {
+	MailConfig email.Config
+	AIConfig   ai.Config
+}
+
+func loadDependencies() (Config, app.Dependencies) {
+	cfg := Config{}
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	dbI := database.NewClient()
+	mail := email.New(cfg.MailConfig)
+	aiI := ai.New(cfg.AIConfig)
+
+	return cfg, app.Dependencies{
+		DB:   dbI,
+		Mail: mail,
+		AI:   aiI,
+	}
+}
 
 func main() {
 	log.Logger = log.With().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
@@ -36,8 +62,21 @@ func main() {
 			{
 				Name: "app:start",
 				Action: func(context *cli.Context) error {
-					app.StartApp()
+					_, deps := loadDependencies()
+					app.StartApp(deps)
 					return errors.New("app crashed")
+				},
+			},
+			{
+				Name: "app:sendMorningRecap",
+				Action: func(context *cli.Context) error {
+					cfg, deps := loadDependencies()
+
+					if cfg.AIConfig.Key == "" {
+						return errors.New("AI key is required to send morning recaps")
+					}
+
+					return app.SendMorningRecap(deps, context.Context)
 				},
 			},
 			{
@@ -142,10 +181,11 @@ func seed(ctx context.Context, dbI *database.Db) error {
 
 	users := []struct {
 		Email string
+		Name  string
 	}{
-		{Email: "fred@example.org"},
-		{Email: "john@example.org"},
-		{Email: "sofia@example.org"},
+		{Name: "Fred", Email: "fred@example.org"},
+		{Name: "John", Email: "john@example.org"},
+		{Name: "Sofia", Email: "sofia@example.org"},
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	if err != nil {
@@ -154,6 +194,7 @@ func seed(ctx context.Context, dbI *database.Db) error {
 
 	for _, s := range users {
 		user, err := dbI.UserCreate(ctx, db.UserCreateParams{
+			Name:     s.Name,
 			Email:    s.Email,
 			Password: string(hashedPassword),
 		})

@@ -86,28 +86,32 @@ func (q *Queries) SessionCreate(ctx context.Context, arg SessionCreateParams) (S
 }
 
 const userCreate = `-- name: UserCreate :one
-insert into users (email, password) values ($1, $2) returning id, email, password, created_at
+insert into users (email, password, name) values ($1, $2, $3) returning id, name, email, password, created_at, morning_recap_opt_in, morning_recap_last_sent_at
 `
 
 type UserCreateParams struct {
 	Email    string `db:"email"`
 	Password string `db:"password"`
+	Name     string `db:"name"`
 }
 
 func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, error) {
-	row := q.db.QueryRow(ctx, userCreate, arg.Email, arg.Password)
+	row := q.db.QueryRow(ctx, userCreate, arg.Email, arg.Password, arg.Name)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.MorningRecapOptIn,
+		&i.MorningRecapLastSentAt,
 	)
 	return i, err
 }
 
 const userFind = `-- name: UserFind :many
-select id, email, password, created_at from users
+select id, name, email, password, created_at, morning_recap_opt_in, morning_recap_last_sent_at from users
 `
 
 func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
@@ -121,9 +125,12 @@ func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.Name,
 			&i.Email,
 			&i.Password,
 			&i.CreatedAt,
+			&i.MorningRecapOptIn,
+			&i.MorningRecapLastSentAt,
 		); err != nil {
 			return nil, err
 		}
@@ -136,7 +143,7 @@ func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
 }
 
 const userFindByEmail = `-- name: UserFindByEmail :one
-select id, email, password, created_at from users where email = $1
+select id, name, email, password, created_at, morning_recap_opt_in, morning_recap_last_sent_at from users where email = $1
 `
 
 func (q *Queries) UserFindByEmail(ctx context.Context, email string) (User, error) {
@@ -144,15 +151,18 @@ func (q *Queries) UserFindByEmail(ctx context.Context, email string) (User, erro
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.MorningRecapOptIn,
+		&i.MorningRecapLastSentAt,
 	)
 	return i, err
 }
 
 const userFindById = `-- name: UserFindById :one
-select id, email, password, created_at from users where id = $1
+select id, name, email, password, created_at, morning_recap_opt_in, morning_recap_last_sent_at from users where id = $1
 `
 
 func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
@@ -160,15 +170,18 @@ func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.MorningRecapOptIn,
+		&i.MorningRecapLastSentAt,
 	)
 	return i, err
 }
 
 const userFindByPasswordResetToken = `-- name: UserFindByPasswordResetToken :one
-select u.id, u.email, u.password, u.created_at from password_reset_tokens p
+select u.id, u.name, u.email, u.password, u.created_at, u.morning_recap_opt_in, u.morning_recap_last_sent_at from password_reset_tokens p
 inner join users u on u.id = p.user_id
 where token = $1 and p.created_at > now() - interval '30 minutes'
 `
@@ -178,15 +191,18 @@ func (q *Queries) UserFindByPasswordResetToken(ctx context.Context, token string
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.MorningRecapOptIn,
+		&i.MorningRecapLastSentAt,
 	)
 	return i, err
 }
 
 const userFindBySession = `-- name: UserFindBySession :one
-select id, email, password, created_at from users where id = (select user_id from sessions where token = $1 and users.created_at > now() - interval '30 days')
+select id, name, email, password, created_at, morning_recap_opt_in, morning_recap_last_sent_at from users where id = (select user_id from sessions where token = $1 and users.created_at > now() - interval '30 days')
 `
 
 func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, error) {
@@ -194,9 +210,12 @@ func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, er
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.MorningRecapOptIn,
+		&i.MorningRecapLastSentAt,
 	)
 	return i, err
 }

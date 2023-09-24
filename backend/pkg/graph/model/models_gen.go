@@ -52,6 +52,10 @@ type TimeEntryConnection struct {
 	Edges []db.TimeEntry `json:"edges"`
 }
 
+type UpdateMorningRecapOptInPayload struct {
+	User db.User `json:"user"`
+}
+
 type UpdateProjectPayload struct {
 	Project db.Project `json:"project"`
 }

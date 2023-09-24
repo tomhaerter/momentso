@@ -46,7 +46,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, email string, password st
 }
 
 // SignUp is the resolver for the signUp field.
-func (r *mutationResolver) SignUp(ctx context.Context, email string, password string) (*model.SignUpPayload, error) {
+func (r *mutationResolver) SignUp(ctx context.Context, email string, password string, name string) (*model.SignUpPayload, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -55,6 +55,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, email string, password st
 	user, err := r.DB.UserCreate(ctx, db.UserCreateParams{
 		Email:    email,
 		Password: string(hash),
+		Name:     name,
 	})
 	if err != nil {
 		return nil, err
@@ -92,7 +93,7 @@ func (r *mutationResolver) RequestPasswordReset(ctx context.Context, email strin
 		return &model.RequestPasswordResetPayload{}, nil
 	}
 
-	err = r.Mail.SendPasswordReset(user.Email, token)
+	err = r.Mail.SendPasswordReset(user.Name, user.Email, token)
 	if err != nil {
 		log.Err(err).Msg("failed to send password reset email")
 		return &model.RequestPasswordResetPayload{}, nil
@@ -127,6 +128,26 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, token string, newP
 	}
 
 	return &model.ResetPasswordPayload{}, nil
+}
+
+// UpdateMorningRecapOptIn is the resolver for the updateMorningRecapOptIn field.
+func (r *mutationResolver) UpdateMorningRecapOptIn(ctx context.Context, enabled bool) (*model.UpdateMorningRecapOptInPayload, error) {
+	user, ok := auth.UserForCtx(ctx)
+	if !ok {
+		return nil, errors.New("unauthorized")
+	}
+
+	user, err := r.DB.UserUpdateMorningRecapOptIn(ctx, db.UserUpdateMorningRecapOptInParams{
+		ID:                user.ID,
+		MorningRecapOptIn: enabled,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UpdateMorningRecapOptInPayload{
+		User: user,
+	}, nil
 }
 
 // Me is the resolver for the me field.
@@ -164,16 +185,3 @@ func (r *Resolver) ResetPasswordPayload() ResetPasswordPayloadResolver {
 type mutationResolver struct{ *Resolver }
 type requestPasswordResetPayloadResolver struct{ *Resolver }
 type resetPasswordPayloadResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *requestPasswordResetPayloadResolver) _(ctx context.Context, obj *model.RequestPasswordResetPayload) (interface{}, error) {
-	panic(fmt.Errorf("not implemented: _ - _"))
-}
-func (r *resetPasswordPayloadResolver) _(ctx context.Context, obj *model.ResetPasswordPayload) (interface{}, error) {
-	panic(fmt.Errorf("not implemented: _ - _"))
-}

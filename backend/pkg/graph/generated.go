@@ -15,12 +15,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	gqlparser "github.com/vektah/gqlparser/v2"
-	"github.com/vektah/gqlparser/v2/ast"
-
 	"github.com/openmomentso/momentso/pkg/database/db"
 	"github.com/openmomentso/momentso/pkg/graph/model"
 	"github.com/openmomentso/momentso/pkg/helper"
+	gqlparser "github.com/vektah/gqlparser/v2"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -62,14 +61,15 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateProject        func(childComplexity int, input model.CreateProjectInput) int
-		CreateTimeEntry      func(childComplexity int, input model.CreateTimeEntryInput) int
-		RequestPasswordReset func(childComplexity int, email string) int
-		ResetPassword        func(childComplexity int, token string, newPassword string) int
-		SignIn               func(childComplexity int, email string, password string) int
-		SignUp               func(childComplexity int, email string, password string) int
-		UpdateProject        func(childComplexity int, id int64, input map[string]interface{}) int
-		UpdateTimeEntry      func(childComplexity int, id int64, input map[string]interface{}) int
+		CreateProject           func(childComplexity int, input model.CreateProjectInput) int
+		CreateTimeEntry         func(childComplexity int, input model.CreateTimeEntryInput) int
+		RequestPasswordReset    func(childComplexity int, email string) int
+		ResetPassword           func(childComplexity int, token string, newPassword string) int
+		SignIn                  func(childComplexity int, email string, password string) int
+		SignUp                  func(childComplexity int, email string, password string, name string) int
+		UpdateMorningRecapOptIn func(childComplexity int, enabled bool) int
+		UpdateProject           func(childComplexity int, id int64, input map[string]interface{}) int
+		UpdateTimeEntry         func(childComplexity int, id int64, input map[string]interface{}) int
 	}
 
 	Project struct {
@@ -122,6 +122,10 @@ type ComplexityRoot struct {
 		Edges func(childComplexity int) int
 	}
 
+	UpdateMorningRecapOptInPayload struct {
+		User func(childComplexity int) int
+	}
+
 	UpdateProjectPayload struct {
 		Project func(childComplexity int) int
 	}
@@ -131,16 +135,18 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Email func(childComplexity int) int
-		ID    func(childComplexity int) int
+		Email             func(childComplexity int) int
+		ID                func(childComplexity int) int
+		MorningRecapOptIn func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
 	SignIn(ctx context.Context, email string, password string) (*model.SignInPayload, error)
-	SignUp(ctx context.Context, email string, password string) (*model.SignUpPayload, error)
+	SignUp(ctx context.Context, email string, password string, name string) (*model.SignUpPayload, error)
 	RequestPasswordReset(ctx context.Context, email string) (*model.RequestPasswordResetPayload, error)
 	ResetPassword(ctx context.Context, token string, newPassword string) (*model.ResetPasswordPayload, error)
+	UpdateMorningRecapOptIn(ctx context.Context, enabled bool) (*model.UpdateMorningRecapOptInPayload, error)
 	CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.CreateProjectPayload, error)
 	UpdateProject(ctx context.Context, id int64, input map[string]interface{}) (*model.UpdateProjectPayload, error)
 	CreateTimeEntry(ctx context.Context, input model.CreateTimeEntryInput) (*model.CreateTimeEntryPayload, error)
@@ -268,7 +274,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SignUp(childComplexity, args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.SignUp(childComplexity, args["email"].(string), args["password"].(string), args["name"].(string)), true
+
+	case "Mutation.updateMorningRecapOptIn":
+		if e.complexity.Mutation.UpdateMorningRecapOptIn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMorningRecapOptIn_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMorningRecapOptIn(childComplexity, args["enabled"].(bool)), true
 
 	case "Mutation.updateProject":
 		if e.complexity.Mutation.UpdateProject == nil {
@@ -460,6 +478,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TimeEntryConnection.Edges(childComplexity), true
 
+	case "UpdateMorningRecapOptInPayload.user":
+		if e.complexity.UpdateMorningRecapOptInPayload.User == nil {
+			break
+		}
+
+		return e.complexity.UpdateMorningRecapOptInPayload.User(childComplexity), true
+
 	case "UpdateProjectPayload.project":
 		if e.complexity.UpdateProjectPayload.Project == nil {
 			break
@@ -487,6 +512,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+
+	case "User.morningRecapOptIn":
+		if e.complexity.User.MorningRecapOptIn == nil {
+			break
+		}
+
+		return e.complexity.User.MorningRecapOptIn(childComplexity), true
 
 	}
 	return 0, false
@@ -731,6 +763,30 @@ func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawA
 		}
 	}
 	args["password"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMorningRecapOptIn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["enabled"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["enabled"] = arg0
 	return args, nil
 }
 
@@ -1037,7 +1093,7 @@ func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SignUp(rctx, fc.Args["email"].(string), fc.Args["password"].(string))
+		return ec.resolvers.Mutation().SignUp(rctx, fc.Args["email"].(string), fc.Args["password"].(string), fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1196,6 +1252,65 @@ func (ec *executionContext) fieldContext_Mutation_resetPassword(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_resetPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateMorningRecapOptIn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateMorningRecapOptIn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateMorningRecapOptIn(rctx, fc.Args["enabled"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UpdateMorningRecapOptInPayload)
+	fc.Result = res
+	return ec.marshalNUpdateMorningRecapOptInPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateMorningRecapOptInPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateMorningRecapOptIn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "user":
+				return ec.fieldContext_UpdateMorningRecapOptInPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateMorningRecapOptInPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateMorningRecapOptIn_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1841,6 +1956,8 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 				return ec.fieldContext_User_id(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "morningRecapOptIn":
+				return ec.fieldContext_User_morningRecapOptIn(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2194,6 +2311,8 @@ func (ec *executionContext) fieldContext_SignInPayload_user(ctx context.Context,
 				return ec.fieldContext_User_id(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "morningRecapOptIn":
+				return ec.fieldContext_User_morningRecapOptIn(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2288,6 +2407,8 @@ func (ec *executionContext) fieldContext_SignUpPayload_user(ctx context.Context,
 				return ec.fieldContext_User_id(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "morningRecapOptIn":
+				return ec.fieldContext_User_morningRecapOptIn(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2423,6 +2544,8 @@ func (ec *executionContext) fieldContext_TimeEntry_createdBy(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "morningRecapOptIn":
+				return ec.fieldContext_User_morningRecapOptIn(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2668,6 +2791,58 @@ func (ec *executionContext) fieldContext_TimeEntryConnection_edges(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateMorningRecapOptInPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.UpdateMorningRecapOptInPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateMorningRecapOptInPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(db.User)
+	fc.Result = res
+	return ec.marshalNUser2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋdatabaseᚋdbᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateMorningRecapOptInPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateMorningRecapOptInPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "morningRecapOptIn":
+				return ec.fieldContext_User_morningRecapOptIn(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateProjectPayload_project(ctx context.Context, field graphql.CollectedField, obj *model.UpdateProjectPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateProjectPayload_project(ctx, field)
 	if err != nil {
@@ -2863,6 +3038,50 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_morningRecapOptIn(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_morningRecapOptIn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MorningRecapOptIn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_morningRecapOptIn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4850,6 +5069,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateMorningRecapOptIn":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateMorningRecapOptIn(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createProject":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProject(ctx, field)
@@ -5560,6 +5786,45 @@ func (ec *executionContext) _TimeEntryConnection(ctx context.Context, sel ast.Se
 	return out
 }
 
+var updateMorningRecapOptInPayloadImplementors = []string{"UpdateMorningRecapOptInPayload"}
+
+func (ec *executionContext) _UpdateMorningRecapOptInPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateMorningRecapOptInPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateMorningRecapOptInPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateMorningRecapOptInPayload")
+		case "user":
+			out.Values[i] = ec._UpdateMorningRecapOptInPayload_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateProjectPayloadImplementors = []string{"UpdateProjectPayload"}
 
 func (ec *executionContext) _UpdateProjectPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateProjectPayload) graphql.Marshaler {
@@ -5690,6 +5955,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "morningRecapOptIn":
+			out.Values[i] = ec._User_morningRecapOptIn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6325,6 +6595,20 @@ func (ec *executionContext) marshalNTimeEntryConnection2ᚖgithubᚗcomᚋopenmo
 		return graphql.Null
 	}
 	return ec._TimeEntryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUpdateMorningRecapOptInPayload2githubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateMorningRecapOptInPayload(ctx context.Context, sel ast.SelectionSet, v model.UpdateMorningRecapOptInPayload) graphql.Marshaler {
+	return ec._UpdateMorningRecapOptInPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateMorningRecapOptInPayload2ᚖgithubᚗcomᚋopenmomentsoᚋmomentsoᚋpkgᚋgraphᚋmodelᚐUpdateMorningRecapOptInPayload(ctx context.Context, sel ast.SelectionSet, v *model.UpdateMorningRecapOptInPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateMorningRecapOptInPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateProjectInput2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {

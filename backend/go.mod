@@ -13,6 +13,7 @@ require (
 	github.com/matcornic/hermes/v2 v2.1.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/rs/zerolog v1.30.0
+	github.com/sashabaranov/go-openai v1.15.3
 	github.com/sqids/sqids-go v0.4.1
 	github.com/urfave/cli/v2 v2.25.5
 	github.com/vektah/gqlparser/v2 v2.5.10

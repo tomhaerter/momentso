@@ -3,6 +3,7 @@ package email
 import (
 	"net/smtp"
 	"strconv"
+	"strings"
 
 	"github.com/jordan-wright/email"
 	"github.com/matcornic/hermes/v2"
@@ -36,10 +37,10 @@ func New(cfg Config) *Mail {
 	}
 }
 
-func (m *Mail) SendPasswordReset(to string, token string) error {
+func (m *Mail) SendPasswordReset(name string, to string, token string) error {
 	mail := hermes.Email{
 		Body: hermes.Body{
-			Name: to,
+			Name: name,
 			Intros: []string{
 				"You have received this email because a password reset request for your account was received.",
 			},
@@ -73,6 +74,43 @@ func (m *Mail) SendPasswordReset(to string, token string) error {
 	e.From = m.Cfg.From
 	e.To = []string{to}
 	e.Subject = "Password Reset"
+	e.HTML = []byte(html)
+	e.Text = []byte(text)
+	return e.Send(m.Cfg.Host+":"+strconv.Itoa(m.Cfg.Port), smtp.PlainAuth("", m.Cfg.Username, m.Cfg.Password, m.Cfg.Host))
+}
+
+func (m *Mail) SendMorningRecap(name, to, recap string) error {
+	recap = strings.ReplaceAll(recap, "\n", "\n>")
+
+	mail := hermes.Email{
+		Body: hermes.Body{
+			Name: name,
+			Intros: []string{
+				"Your morning recap is ready!",
+			},
+
+			FreeMarkdown: hermes.Markdown(">" + recap + ""),
+
+			Outros: []string{
+				"If you no longer wish to receive morning recaps, you can disable them in your account settings.",
+			},
+		},
+	}
+
+	html, err := m.Hermes.GenerateHTML(mail)
+	if err != nil {
+		return err
+	}
+
+	text, err := m.Hermes.GeneratePlainText(mail)
+	if err != nil {
+		return err
+	}
+
+	e := email.NewEmail()
+	e.From = m.Cfg.From
+	e.To = []string{to}
+	e.Subject = "Your morning recap"
 	e.HTML = []byte(html)
 	e.Text = []byte(text)
 	return e.Send(m.Cfg.Host+":"+strconv.Itoa(m.Cfg.Port), smtp.PlainAuth("", m.Cfg.Username, m.Cfg.Password, m.Cfg.Host))

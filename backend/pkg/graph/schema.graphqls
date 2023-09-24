@@ -6,6 +6,7 @@ scalar Time
 type User {
   id: ID!
   email: String! @goField(forceResolver: true)
+  morningRecapOptIn: Boolean!
 }
 
 type Project {

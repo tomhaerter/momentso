@@ -5,8 +5,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/caarlos0/env/v9"
 
+	"github.com/openmomentso/momentso/pkg/ai"
 	"github.com/openmomentso/momentso/pkg/app/auth"
 	"github.com/openmomentso/momentso/pkg/database"
 	"github.com/openmomentso/momentso/pkg/email"
@@ -16,16 +16,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-type Config struct {
-	MailConfig email.Config
+type Dependencies struct {
+	DB   *database.Db
+	Mail *email.Mail
+	AI   *ai.AI
 }
 
-func StartApp() {
-	cfg := Config{}
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
+func StartApp(deps Dependencies) {
 
 	dbI := database.NewClient()
 	defer dbI.Db.Close()
@@ -36,8 +33,8 @@ func StartApp() {
 	e.Use(auth.Middleware(dbI))
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		DB:   dbI,
-		Mail: email.New(cfg.MailConfig),
+		DB:   deps.DB,
+		Mail: deps.Mail,
 	}}))
 
 	e.GET("/", echo.WrapHandler(playground.Handler("GraphQL playground", "/graphql")))

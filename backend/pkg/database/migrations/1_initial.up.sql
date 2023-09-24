@@ -1,9 +1,13 @@
 create table users
 (
     id         bigint primary key generated always as identity,
+    name       text        not null,
     email      text        not null unique,
     password   text        not null,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+
+    morning_recap_opt_in bool not null default false,
+    morning_recap_last_sent_at timestamptz null
 );
 
 create table password_reset_tokens

@@ -8,7 +8,7 @@ select * from users where id = $1;
 select * from users where email = $1;
 
 -- name: UserCreate :one
-insert into users (email, password) values ($1, $2) returning *;
+insert into users (email, password, name) values ($1, $2, $3) returning *;
 
 -- name: SessionCreate :one
 insert into sessions (user_id, token) values ($1, $2) returning *;

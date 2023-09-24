@@ -16,10 +16,16 @@ extend type Query {
 
 extend type Mutation {
     signIn(email: String!, password: String!): SignInPayload!
-    signUp(email: String!, password: String!): SignUpPayload!
+    signUp(email: String!, password: String!, name: String!): SignUpPayload!
 
     requestPasswordReset(email: String!): RequestPasswordResetPayload!
     resetPassword(token: String!, newPassword: String!): ResetPasswordPayload!
+
+    updateMorningRecapOptIn(enabled: Boolean!): UpdateMorningRecapOptInPayload!
+}
+
+type UpdateMorningRecapOptInPayload {
+    user: User!
 }
 
 type RequestPasswordResetPayload {
