@@ -2,8 +2,8 @@
   <div>
     <div v-if="data" class="flex gap-px flex-col shadow-card">
 
-      <div v-for="day in entriesByDay">
-        <div>Day: {{ day[0].startedAt }}</div>
+      <div class="bg-neutral-inverted/5 rounded-xl" v-for="day in entriesByDay">
+        <div class="p-3">{{ formatDate(new Date(day[0].startedAt)) }}</div>
         <div v-for="timeEntry in day" :key="timeEntry.id"
           class="flex gap-2 items-center justify-between p-3 bg-neutral-inverted/5 hover:bg-neutral-inverted/10 first:rounded-t-xl last:rounded-b-xl shadow-card">
           <div class="text-sm" v-if="timeEntry.description">{{ timeEntry.description }}</div>
@@ -94,4 +94,14 @@ function timeToHours(time: Date) {
   return `${timeObj.getHours() % 12}:${timeObj.getMinutes().toString().padStart(2, "0")} ${afternoon}`
 
 }
+
+function formatDate(time: Date) {
+
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(time)
+}
 </script>
+
