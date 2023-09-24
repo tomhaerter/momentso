@@ -1,5 +1,5 @@
 -- name: TimeEntryFind :many
-select * from time_entries where created_by = $1 order by created_at desc;
+select * from time_entries where created_by = $1 order by started_at desc;
 
 -- name: TimeEntryFindById :one
 select * from time_entries where id = $1 and created_by = $2;

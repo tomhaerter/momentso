@@ -44,7 +44,7 @@ func (q *Queries) TimeEntryCreate(ctx context.Context, arg TimeEntryCreateParams
 }
 
 const timeEntryFind = `-- name: TimeEntryFind :many
-select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries where created_by = $1 order by created_at desc
+select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries where created_by = $1 order by started_at desc
 `
 
 func (q *Queries) TimeEntryFind(ctx context.Context, createdBy int64) ([]TimeEntry, error) {
