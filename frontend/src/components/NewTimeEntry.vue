@@ -1,25 +1,44 @@
 <template>
   <div>
-    <div class="flex bg-zinc-700 items-center rounded-lg p-0 overflow-hidden">
+    <div class="flex bg-neutral-inverted/5 items-center rounded-xl p-0 overflow-hidden">
       <input v-model="activeDescription" type="text" name="description" id="description"
         placeholder="What are you working on?"
-        class="placeholder:text-zinc-500 h-12 pl-4 w-full bg-zinc-700 focus:ring-0 p-2 text-sm border-none">
-      <div class="p-1.5">
-        <button class="py-1.5 h-fit text-sm px-4 bg-red-600 hover:bg-red-500 transition-all text-white rounded-lg"
-          :class="{ 'animate-pulse': hasActiveTimer }" type="button"
-          @click="() => hasActiveTimer ? stopTracking() : startTracking()">{{ buttonText }}</button>
+        class="placeholder:text-neutral-inverted/50 bg-transparent h-14 pl-4 w-full focus:ring-0 p-2 text-sm border-none shadow-lg" autocomplete="off">
+      <div>
+        {{ currentTime }}
+      </div>
+      <div class="p-3">
+        <button class="flex gap-1 items-center justify-center w-20 py-1.5 h-fit text-sm bg-accent-default hover:bg-accent-hover active:bg-gradient-to-b from-accent-dark to-accent-default transition-all text-neutral-inverted rounded-xl border border-transparent hover:border-accent-default shadow-button-default hover:shadow-button-hover active:shadow-button-pressed"
+           type="button"
+          @click="() => hasActiveTimer ? stopTracking() : startTracking()">
+          <div  class="flex items-center justify-center w-[18px] h-[18px]">
+            <div v-show="hasActiveTimer" class="w-2.5 h-2.5 bg-neutral-inverted"></div>
+            <Play v-show="!hasActiveTimer" class="fill-neutral-inverted"  color="white" :size="16"/>
+          </div> 
+          {{ buttonText }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useMutation, useQuery } from '@urql/vue';
 import { graphql } from '@/gql';
+import { Play } from 'lucide-vue-next';
+
 
 const hasActiveTimer = computed(() => !!runningTimeEntry.value?.runningTimeEntry)
 const buttonText = computed(() => hasActiveTimer.value ? 'Stop' : 'Start')
+
+const currentTime = computed(() => {
+  if(runningTimeEntry !== undefined) {
+    let start = runningTimeEntry.value?.runningTimeEntry?.createdAt;
+    let now = new Date();
+    return diffBetweenDates(now, start)
+  }
+})
 
 const description = ref('')
 const activeDescription = computed({
@@ -100,4 +119,27 @@ async function stopTracking() {
   await refreshRunningTimer()
   description.value = ''
 }
+
+function diffBetweenDates(date1: any, date2: any) {
+  if (!date1 || !date2) return '0:0:0'
+
+  const date1Obj = new Date(Date.parse(date1))
+  const date2Obj = new Date(Date.parse(date2))
+
+  return formatTimeDiff(date1Obj.getTime() - date2Obj.getTime())
+}
+
+function formatTimeDiff(diff: number) {
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  if (hours > 0) {
+    return `${hours}:${minutes % 60}:${seconds % 60}`
+  } else {
+    return `${minutes}:${seconds % 60}`
+  }
+}
+
+
 </script>

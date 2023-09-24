@@ -4,9 +4,9 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <template>
   <nav class="px-4 py-2 flex gap-2">
-    <RouterLink class="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl text-sm" to="/">Home</RouterLink>
-    <RouterLink class="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl text-sm" to="/login">Login</RouterLink>
-    <RouterLink class="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl text-sm" to="/signup">Sign up</RouterLink>
+    <RouterLink class="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm" to="/">Home</RouterLink>
+    <RouterLink class="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm" to="/login">Login</RouterLink>
+    <RouterLink class="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm" to="/signup">Sign up</RouterLink>
   </nav>
 
   <main class="p-4">
@@ -16,6 +16,6 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <style scoped>
 .router-link-exact-active {
-  @apply bg-zinc-700 text-white;
+  @apply bg-accent-default text-neutral-inverted;
 }
 </style>
