@@ -30,6 +30,14 @@ type ProjectConnection struct {
 	Edges []db.Project `json:"edges"`
 }
 
+type RequestPasswordResetPayload struct {
+	reserved interface{} `json:"_,omitempty"`
+}
+
+type ResetPasswordPayload struct {
+	reserved interface{} `json:"_,omitempty"`
+}
+
 type SignInPayload struct {
 	Token string  `json:"token"`
 	User  db.User `json:"user"`

@@ -6,6 +6,17 @@ create table users
     created_at timestamptz not null default now()
 );
 
+create table password_reset_tokens
+(
+    id         bigint primary key generated always as identity,
+    user_id    bigint      not null references users (id),
+    token      text        not null unique,
+    created_at timestamptz not null default now(),
+
+    unique (user_id),
+    unique (token)
+);
+
 create table sessions
 (
     id         bigint primary key generated always as identity,

@@ -17,6 +17,13 @@ type Client struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+type PasswordResetToken struct {
+	ID        int64     `db:"id"`
+	UserID    int64     `db:"user_id"`
+	Token     string    `db:"token"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
 type Project struct {
 	ID        int64       `db:"id"`
 	UserID    int64       `db:"user_id"`

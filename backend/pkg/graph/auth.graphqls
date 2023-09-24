@@ -1,3 +1,5 @@
+scalar Any
+
 type SignInPayload {
     token: String!
     user: User!
@@ -15,4 +17,15 @@ extend type Query {
 extend type Mutation {
     signIn(email: String!, password: String!): SignInPayload!
     signUp(email: String!, password: String!): SignUpPayload!
+
+    requestPasswordReset(email: String!): RequestPasswordResetPayload!
+    resetPassword(token: String!, newPassword: String!): ResetPasswordPayload!
+}
+
+type RequestPasswordResetPayload {
+    _: Any @deprecated(reason: "reserved for future use. Use __typename") @goField(name: "reserved")
+}
+
+type ResetPasswordPayload {
+    _: Any @deprecated(reason: "reserved for future use. Use __typename") @goField(name: "reserved")
 }
