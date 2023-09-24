@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useMutation, useQuery } from '@urql/vue';
 import { graphql } from '@/gql';
 import { Play } from 'lucide-vue-next';
@@ -31,13 +31,18 @@ import { Play } from 'lucide-vue-next';
 
 const hasActiveTimer = computed(() => !!runningTimeEntry.value?.runningTimeEntry)
 const buttonText = computed(() => hasActiveTimer.value ? 'Stop' : 'Start')
-
+const now = ref(new Date)
 const currentTime = computed(() => {
   if(runningTimeEntry !== undefined) {
     let start = runningTimeEntry.value?.runningTimeEntry?.createdAt;
-    let now = new Date();
-    return diffBetweenDates(now, start)
+    return diffBetweenDates(now.value, start)
   }
+})
+
+onMounted(() => {
+  setInterval(() => {
+    now.value = new Date();
+  }, 1000)
 })
 
 const description = ref('')
