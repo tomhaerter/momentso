@@ -79,9 +79,8 @@ const activeDescription = computed({
     return description.value
   },
   set: (value) => {
-    if (!runningTimeEntry.value?.runningTimeEntry?.description) return
-
     if (hasActiveTimer.value) {
+      if (!runningTimeEntry.value?.runningTimeEntry) return
       runningTimeEntry.value.runningTimeEntry.description = value
     } else {
       description.value = value

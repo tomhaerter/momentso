@@ -1,0 +1,124 @@
+# This file was generated. Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+"The @defer directive may be specified on a fragment spread to imply de-prioritization, that causes the fragment to be omitted in the initial response, and delivered as a subsequent response afterward. A query with @defer directive will cause the request to potentially return multiple responses, where non-deferred data is delivered in the initial response and data deferred delivered in a subsequent response. @include and @skip take precedence over @defer."
+directive @defer(if: Boolean = true, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+type CreateProjectPayload {
+    project: Project!
+}
+
+type CreateTimeEntryPayload {
+    timeEntry: TimeEntry!
+}
+
+type Mutation {
+    createProject(input: CreateProjectInput!): CreateProjectPayload!
+    createTimeEntry(input: CreateTimeEntryInput!): CreateTimeEntryPayload!
+    requestPasswordReset(email: String!): RequestPasswordResetPayload!
+    resetPassword(newPassword: String!, token: String!): ResetPasswordPayload!
+    signIn(email: String!, password: String!): SignInPayload!
+    signUp(email: String!, name: String!, password: String!): SignUpPayload!
+    updateMorningRecapOptIn(enabled: Boolean!): UpdateMorningRecapOptInPayload!
+    updateProject(id: ID!, input: UpdateProjectInput!): UpdateProjectPayload!
+    updateTimeEntry(id: ID!, input: UpdateTimeEntryInput!): UpdateTimeEntryPayload!
+}
+
+type Project {
+    color: String!
+    id: ID!
+    name: String!
+}
+
+type ProjectConnection {
+    edges: [Project!]!
+}
+
+type Query {
+    me: User!
+    projects: ProjectConnection!
+    runningTimeEntry: TimeEntry
+    timeEntries: TimeEntryConnection!
+    timeEntry(id: ID!): TimeEntry!
+}
+
+type RequestPasswordResetPayload {
+    _: Any @deprecated(reason: "reserved for future use. Use __typename")
+}
+
+type ResetPasswordPayload {
+    _: Any @deprecated(reason: "reserved for future use. Use __typename")
+}
+
+type SignInPayload {
+    token: String!
+    user: User!
+}
+
+type SignUpPayload {
+    token: String!
+    user: User!
+}
+
+type TimeEntry {
+    completedAt: Time
+    createdAt: Time!
+    createdBy: User!
+    description: String
+    id: ID!
+    project: Project
+    startedAt: Time!
+}
+
+type TimeEntryConnection {
+    edges: [TimeEntry!]!
+}
+
+type UpdateMorningRecapOptInPayload {
+    user: User!
+}
+
+type UpdateProjectPayload {
+    project: Project!
+}
+
+type UpdateTimeEntryPayload {
+    timeEntry: TimeEntry!
+}
+
+type User {
+    email: String!
+    id: ID!
+    morningRecapOptIn: Boolean!
+}
+
+scalar Any
+
+scalar Time
+
+input CreateProjectInput {
+    color: String!
+    name: String!
+}
+
+input CreateTimeEntryInput {
+    description: String!
+    startedAt: Time
+}
+
+input UpdateProjectInput {
+    color: String
+    name: String
+}
+
+input UpdateTimeEntryInput {
+    completedAt: Time
+    description: String
+    startedAt: Time
+}
