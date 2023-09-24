@@ -8,6 +8,15 @@ import (
 	"github.com/openmomentso/momentso/pkg/database/db"
 )
 
+type CreateProjectInput struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+type CreateProjectPayload struct {
+	Project db.Project `json:"project"`
+}
+
 type CreateTimeEntryInput struct {
 	Description string     `json:"description"`
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
@@ -15,6 +24,10 @@ type CreateTimeEntryInput struct {
 
 type CreateTimeEntryPayload struct {
 	TimeEntry db.TimeEntry `json:"timeEntry"`
+}
+
+type ProjectConnection struct {
+	Edges []db.Project `json:"edges"`
 }
 
 type SignInPayload struct {
@@ -29,6 +42,10 @@ type SignUpPayload struct {
 
 type TimeEntryConnection struct {
 	Edges []db.TimeEntry `json:"edges"`
+}
+
+type UpdateProjectPayload struct {
+	Project db.Project `json:"project"`
 }
 
 type UpdateTimeEntryPayload struct {

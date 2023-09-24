@@ -34,6 +34,16 @@ func (db *Db) NewQueryBuilder() squirrel.StatementBuilderType {
 	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 }
 
+func ExecUpdate(dbI *Db, ctx context.Context, query squirrel.UpdateBuilder) error {
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = dbI.Db.Exec(ctx, sql, args...)
+	return err
+}
+
 func ScanUpdateOne[T any](dbI *Db, ctx context.Context, query squirrel.UpdateBuilder) (T, error) {
 	var t T
 

@@ -8,11 +8,13 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	driverPgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -103,7 +105,36 @@ func migrateUp() error {
 	return m.Up()
 }
 func seed(ctx context.Context, dbI *database.Db) error {
-	userTable := []struct {
+	projects := []struct {
+		DbID  int64
+		Name  string
+		Color string
+	}{
+		{Name: "Work", Color: "#69c797"},
+		{Name: "Personal", Color: "#714cb5"},
+		{Name: "Family", Color: "#38d1cf"},
+	}
+
+	entries := []struct {
+		ProjectID   int64
+		Description string
+		Offset      time.Duration
+		Length      time.Duration
+	}{
+		{ProjectID: 0, Description: "Worked on the app", Offset: -2 * time.Hour, Length: 1 * time.Hour},
+		{ProjectID: 0, Description: "Setup the Frontend", Offset: -1 * time.Hour, Length: 1 * time.Hour},
+		{ProjectID: 0, Description: "Setup the Backend", Offset: 0, Length: 0},
+
+		{ProjectID: 1, Description: "Worked out", Offset: -8 * time.Hour, Length: 1 * time.Hour},
+		{ProjectID: 1, Description: "Went for a walk", Offset: -7 * time.Hour, Length: 1 * time.Hour},
+		{ProjectID: 1, Description: "Cooked food", Offset: -6 * time.Hour, Length: 1 * time.Hour},
+
+		{ProjectID: 2, Description: "Spent time with my dog", Offset: -12 * time.Hour, Length: 1 * time.Hour},
+		{ProjectID: 2, Description: "Spent time with my cat", Offset: -11 * time.Hour, Length: 2 * time.Hour},
+		{ProjectID: 2, Description: "Spent time with my family", Offset: -9 * time.Hour, Length: 1 * time.Hour},
+	}
+
+	users := []struct {
 		Email string
 	}{
 		{Email: "fred@example.org"},
@@ -115,14 +146,47 @@ func seed(ctx context.Context, dbI *database.Db) error {
 		return err
 	}
 
-	for _, s := range userTable {
-		_, err = dbI.UserCreate(ctx, db.UserCreateParams{
+	for _, s := range users {
+		user, err := dbI.UserCreate(ctx, db.UserCreateParams{
 			Email:    s.Email,
 			Password: string(hashedPassword),
 		})
 		if err != nil {
 			return err
 		}
+
+		for i, project := range projects {
+			dbProject, err := dbI.ProjectCreate(ctx, db.ProjectCreateParams{
+				Name:   project.Name,
+				UserID: user.ID,
+				Color:  project.Color,
+			})
+			if err != nil {
+				return err
+			}
+
+			projects[i].DbID = dbProject.ID
+		}
+
+		for _, entry := range entries {
+			dbEntry, err := dbI.TimeEntryCreate(ctx, db.TimeEntryCreateParams{
+				ProjectID:   pgtype.Int8{Valid: true, Int64: projects[entry.ProjectID].DbID},
+				CreatedBy:   user.ID,
+				StartedAt:   time.Now().Add(entry.Offset),
+				Description: entry.Description,
+			})
+			if err != nil {
+				return err
+			}
+
+			if entry.Length > 0 {
+				err = database.ExecUpdate(dbI, ctx, dbI.NewQueryBuilder().Update("time_entries").Set("completed_at", time.Now().Add(entry.Offset+entry.Length)).Where("id = ?", dbEntry.ID))
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 	}
 
 	return nil

@@ -16,3 +16,9 @@ type TimeEntry {
   startedAt: Time!
   completedAt: Time
 }
+
+type Project {
+  id: ID!
+  name: String!
+  color: String!
+}

@@ -83,3 +83,5 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   UpdateTimeEntryInput:
     model: map[string]interface{}
+  UpdateProjectInput:
+    model: map[string]interface{}

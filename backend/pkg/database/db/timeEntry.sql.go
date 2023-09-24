@@ -8,35 +8,43 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const timeEntryCreate = `-- name: TimeEntryCreate :one
-insert into time_entries (created_by, started_at, description) values ($1, $2, $3) returning id, description, workspace_id, created_by, created_at, started_at, completed_at
+insert into time_entries (created_by, started_at, description, project_id) values ($1, $2, $3, $4) returning id, description, created_by, created_at, started_at, completed_at, project_id
 `
 
 type TimeEntryCreateParams struct {
-	CreatedBy   int64     `db:"created_by"`
-	StartedAt   time.Time `db:"started_at"`
-	Description string    `db:"description"`
+	CreatedBy   int64       `db:"created_by"`
+	StartedAt   time.Time   `db:"started_at"`
+	Description string      `db:"description"`
+	ProjectID   pgtype.Int8 `db:"project_id"`
 }
 
 func (q *Queries) TimeEntryCreate(ctx context.Context, arg TimeEntryCreateParams) (TimeEntry, error) {
-	row := q.db.QueryRow(ctx, timeEntryCreate, arg.CreatedBy, arg.StartedAt, arg.Description)
+	row := q.db.QueryRow(ctx, timeEntryCreate,
+		arg.CreatedBy,
+		arg.StartedAt,
+		arg.Description,
+		arg.ProjectID,
+	)
 	var i TimeEntry
 	err := row.Scan(
 		&i.ID,
 		&i.Description,
-		&i.WorkspaceID,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
 
 const timeEntryFind = `-- name: TimeEntryFind :many
-select id, description, workspace_id, created_by, created_at, started_at, completed_at from time_entries where created_by = $1
+select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries where created_by = $1 order by created_at desc
 `
 
 func (q *Queries) TimeEntryFind(ctx context.Context, createdBy int64) ([]TimeEntry, error) {
@@ -51,11 +59,11 @@ func (q *Queries) TimeEntryFind(ctx context.Context, createdBy int64) ([]TimeEnt
 		if err := rows.Scan(
 			&i.ID,
 			&i.Description,
-			&i.WorkspaceID,
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.StartedAt,
 			&i.CompletedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -68,7 +76,7 @@ func (q *Queries) TimeEntryFind(ctx context.Context, createdBy int64) ([]TimeEnt
 }
 
 const timeEntryFindById = `-- name: TimeEntryFindById :one
-select id, description, workspace_id, created_by, created_at, started_at, completed_at from time_entries where id = $1 and created_by = $2
+select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries where id = $1 and created_by = $2
 `
 
 type TimeEntryFindByIdParams struct {
@@ -82,17 +90,17 @@ func (q *Queries) TimeEntryFindById(ctx context.Context, arg TimeEntryFindByIdPa
 	err := row.Scan(
 		&i.ID,
 		&i.Description,
-		&i.WorkspaceID,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
 
 const timeEntryFindRunning = `-- name: TimeEntryFindRunning :one
-select id, description, workspace_id, created_by, created_at, started_at, completed_at from time_entries where created_by = $1 and completed_at is null limit 1
+select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries where created_by = $1 and completed_at is null limit 1
 `
 
 func (q *Queries) TimeEntryFindRunning(ctx context.Context, createdBy int64) (TimeEntry, error) {
@@ -101,11 +109,11 @@ func (q *Queries) TimeEntryFindRunning(ctx context.Context, createdBy int64) (Ti
 	err := row.Scan(
 		&i.ID,
 		&i.Description,
-		&i.WorkspaceID,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }

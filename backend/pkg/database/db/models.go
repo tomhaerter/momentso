@@ -11,19 +11,19 @@ import (
 )
 
 type Client struct {
-	ID          int64       `db:"id"`
-	Name        string      `db:"name"`
-	WorkspaceID pgtype.Int8 `db:"workspace_id"`
-	CreatedAt   time.Time   `db:"created_at"`
+	ID        int64     `db:"id"`
+	UserID    int64     `db:"user_id"`
+	Name      string    `db:"name"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type Project struct {
-	ID          int64       `db:"id"`
-	Name        string      `db:"name"`
-	Color       string      `db:"color"`
-	ClientID    pgtype.Int8 `db:"client_id"`
-	WorkspaceID pgtype.Int8 `db:"workspace_id"`
-	CreatedAt   time.Time   `db:"created_at"`
+	ID        int64       `db:"id"`
+	UserID    int64       `db:"user_id"`
+	CreatedAt time.Time   `db:"created_at"`
+	Name      string      `db:"name"`
+	Color     string      `db:"color"`
+	ClientID  pgtype.Int8 `db:"client_id"`
 }
 
 type Session struct {
@@ -36,23 +36,16 @@ type Session struct {
 type TimeEntry struct {
 	ID          int64              `db:"id"`
 	Description string             `db:"description"`
-	WorkspaceID pgtype.Int8        `db:"workspace_id"`
 	CreatedBy   int64              `db:"created_by"`
 	CreatedAt   time.Time          `db:"created_at"`
 	StartedAt   time.Time          `db:"started_at"`
 	CompletedAt pgtype.Timestamptz `db:"completed_at"`
+	ProjectID   pgtype.Int8        `db:"project_id"`
 }
 
 type User struct {
-	ID          int64       `db:"id"`
-	Email       string      `db:"email"`
-	Password    string      `db:"password"`
-	WorkspaceID pgtype.Int8 `db:"workspace_id"`
-	CreatedAt   time.Time   `db:"created_at"`
-}
-
-type Workspace struct {
 	ID        int64     `db:"id"`
-	Name      string    `db:"name"`
+	Email     string    `db:"email"`
+	Password  string    `db:"password"`
 	CreatedAt time.Time `db:"created_at"`
 }

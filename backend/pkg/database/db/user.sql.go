@@ -10,7 +10,7 @@ import (
 )
 
 const listTimeEntries = `-- name: ListTimeEntries :many
-select id, description, workspace_id, created_by, created_at, started_at, completed_at from time_entries
+select id, description, created_by, created_at, started_at, completed_at, project_id from time_entries
 `
 
 func (q *Queries) ListTimeEntries(ctx context.Context) ([]TimeEntry, error) {
@@ -25,11 +25,11 @@ func (q *Queries) ListTimeEntries(ctx context.Context) ([]TimeEntry, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Description,
-			&i.WorkspaceID,
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.StartedAt,
 			&i.CompletedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -63,7 +63,7 @@ func (q *Queries) SessionCreate(ctx context.Context, arg SessionCreateParams) (S
 }
 
 const userCreate = `-- name: UserCreate :one
-insert into users (email, password) values ($1, $2) returning id, email, password, workspace_id, created_at
+insert into users (email, password) values ($1, $2) returning id, email, password, created_at
 `
 
 type UserCreateParams struct {
@@ -78,14 +78,13 @@ func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, e
 		&i.ID,
 		&i.Email,
 		&i.Password,
-		&i.WorkspaceID,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const userFind = `-- name: UserFind :many
-select id, email, password, workspace_id, created_at from users
+select id, email, password, created_at from users
 `
 
 func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
@@ -101,7 +100,6 @@ func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
 			&i.ID,
 			&i.Email,
 			&i.Password,
-			&i.WorkspaceID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -115,7 +113,7 @@ func (q *Queries) UserFind(ctx context.Context) ([]User, error) {
 }
 
 const userFindByEmail = `-- name: UserFindByEmail :one
-select id, email, password, workspace_id, created_at from users where email = $1
+select id, email, password, created_at from users where email = $1
 `
 
 func (q *Queries) UserFindByEmail(ctx context.Context, email string) (User, error) {
@@ -125,14 +123,13 @@ func (q *Queries) UserFindByEmail(ctx context.Context, email string) (User, erro
 		&i.ID,
 		&i.Email,
 		&i.Password,
-		&i.WorkspaceID,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const userFindById = `-- name: UserFindById :one
-select id, email, password, workspace_id, created_at from users where id = $1
+select id, email, password, created_at from users where id = $1
 `
 
 func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
@@ -142,14 +139,13 @@ func (q *Queries) UserFindById(ctx context.Context, id int64) (User, error) {
 		&i.ID,
 		&i.Email,
 		&i.Password,
-		&i.WorkspaceID,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const userFindBySession = `-- name: UserFindBySession :one
-select id, email, password, workspace_id, created_at from users where id = (select user_id from sessions where token = $1 and users.created_at > now() - interval '30 days')
+select id, email, password, created_at from users where id = (select user_id from sessions where token = $1 and users.created_at > now() - interval '30 days')
 `
 
 func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, error) {
@@ -159,7 +155,6 @@ func (q *Queries) UserFindBySession(ctx context.Context, token string) (User, er
 		&i.ID,
 		&i.Email,
 		&i.Password,
-		&i.WorkspaceID,
 		&i.CreatedAt,
 	)
 	return i, err

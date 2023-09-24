@@ -1,0 +1,30 @@
+extend type Query {
+    projects: ProjectConnection!
+}
+
+type ProjectConnection {
+    edges: [Project!]!
+}
+
+input CreateProjectInput {
+    name: String!
+    color: String!
+}
+
+input UpdateProjectInput {
+    name: String
+    color: String
+}
+
+extend type Mutation {
+    createProject(input: CreateProjectInput!): CreateProjectPayload!
+    updateProject(id: ID!, input: UpdateProjectInput!): UpdateProjectPayload!
+}
+
+type CreateProjectPayload {
+    project: Project!
+}
+
+type UpdateProjectPayload {
+    project: Project!
+}
