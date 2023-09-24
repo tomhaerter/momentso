@@ -1,11 +1,20 @@
 <template>
   <div>
-    <div v-if="data" class="flex gap-4 flex-col">
+    <div v-if="data" class="flex gap-px flex-col shadow-card">
       <div v-for="timeEntry in data.timeEntries.edges" :key="timeEntry.id"
-        class="flex gap-2 items-center justify-between py-1 border-b pb-3">
-        <div>{{ timeEntry.description }}</div>
-        <div>
+        class="flex gap-2 items-center justify-between p-3 bg-neutral-inverted/5 hover:bg-neutral-inverted/10 first:rounded-t-xl last:rounded-b-xl shadow-card">
+        <div class="text-sm" v-if="timeEntry.description">{{ timeEntry.description }}</div>
+        <div v-else class="text-neutral-inverted/30 text-xs">(untitled)</div>
+        
+        <div class="flex items-center gap-10">
+          <div class="flex gap-2 text-sm text-neutral-inverted/60">
+          <div>{{ timeToHours(timeEntry.startedAt) }}</div>
+          <div>–</div>
+          <div>{{ timeToHours(timeEntry.completedAt) }}</div>
+        </div>
+        <div class="w-20">
           {{ diffBetweenDates(timeEntry.completedAt, timeEntry.startedAt) }}
+        </div>
         </div>
       </div>
     </div>
@@ -56,5 +65,16 @@ function formatTimeDiff(diff: number) {
   } else {
     return `${minutes}:${seconds % 60}`
   }
+}
+
+function timeToHours (time: Date) {
+  let timeObj = new Date(time);
+  let afternoon = "AM";
+  if(timeObj.getHours() > 12) {
+    afternoon = "PM";
+  }
+  
+  return `${timeObj.getHours()%12}:${timeObj.getMinutes().toString().padStart(2, "0")} ${afternoon}`
+  
 }
 </script>

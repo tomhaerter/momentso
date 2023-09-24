@@ -31,7 +31,10 @@ module.exports = {
       boxShadow: {
         'button-default': '0px -2px 4px 0px rgba(0, 0, 0, 0.16) inset, 0px 4px 4px 0px rgba(0, 0, 0, 0.25)',
         'button-hover': '0px -2px 4px 0px rgba(0, 0, 0, 0.16) inset, 0px 14px 14px 0px rgba(0, 0, 0, 0.15), 0px 0px 24px 0px rgba(255, 58, 15, 0.30)',
-        'button-pressed': '0px -2px 4px 0px rgba(0, 0, 0, 0.16) inset, 0px 14px 14px 0px rgba(0, 0, 0, 0.15), 0px 0px 24px 0px rgba(255, 58, 15, 0.30)'
+        'button-pressed': '0px -2px 4px 0px rgba(0, 0, 0, 0.16) inset, 0px 14px 14px 0px rgba(0, 0, 0, 0.15), 0px 0px 24px 0px rgba(255, 58, 15, 0.30)',
+        'input-default': '0px -2px 4px 0px rgba(91, 91, 91, 0.16) inset;',
+        'input-hover': '0px 4px 20px 0px rgba(0, 0, 0, 0.25);',
+        'card': '0px 8px 20px 0px rgba(0, 0, 0, 0.13)'
       }
     },
   },

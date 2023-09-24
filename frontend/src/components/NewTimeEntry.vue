@@ -1,12 +1,15 @@
 <template>
   <div>
-    <div class="flex bg-neutral-inverted/5 items-center rounded-xl p-0 overflow-hidden">
+    <div class="flex bg-neutral-inverted/5 items-center rounded-xl p-0 overflow-hidden shadow-input-default hover:shadow-input-hover border border-transparent hover:border-neutral-inverted/10 transition duration-300 [&:has(input:focus)]:border-neutral-inverted/20">
       <input v-model="activeDescription" type="text" name="description" id="description"
         placeholder="What are you working on?"
         class="placeholder:text-neutral-inverted/50 bg-transparent h-14 pl-4 w-full focus:ring-0 p-2 text-sm border-none shadow-lg" autocomplete="off">
-      <div>
-        {{ currentTime }}
-      </div>
+      
+      <TimerNumber :number="Math.floor(currentSeconds / 600) % 6"></TimerNumber>
+      <TimerNumber :number="Math.floor(currentSeconds / 60) % 10"></TimerNumber>
+      <div class="w-3 flex justify-center">:</div>
+      <TimerNumber :number="Math.floor(currentSeconds / 10) % 6"></TimerNumber>
+      <TimerNumber :number="currentSeconds % 10"></TimerNumber>
       <div class="p-3">
         <button class="flex gap-1 items-center justify-center w-20 py-1.5 h-fit text-sm bg-accent-default hover:bg-accent-hover active:bg-gradient-to-b from-accent-dark to-accent-default transition-all text-neutral-inverted rounded-xl border border-transparent hover:border-accent-default shadow-button-default hover:shadow-button-hover active:shadow-button-pressed"
            type="button"
@@ -22,13 +25,31 @@
   </div>
 </template>
 
+<style scoped>
+.v-enter-active,
+.v-leave-active {
+  transform: translate(0, -50%);
+  transition: all 0.5s ease;
+}
+
+.v-enter-from {
+  transform: translate(0, 40px);
+}
+.v-leave-to {
+  transform: translate(0, -60px);
+}
+
+</style>
+
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref} from 'vue';
 import { useMutation, useQuery } from '@urql/vue';
 import { graphql } from '@/gql';
 import { Play } from 'lucide-vue-next';
+import TimerNumber from './TimerNumber.vue'
 
-
+const currentSecondsLastDigit = ref(0)
+const currentSeconds = ref(0)
 const hasActiveTimer = computed(() => !!runningTimeEntry.value?.runningTimeEntry)
 const buttonText = computed(() => hasActiveTimer.value ? 'Stop' : 'Start')
 const now = ref(new Date)
@@ -42,6 +63,19 @@ const currentTime = computed(() => {
 onMounted(() => {
   setInterval(() => {
     now.value = new Date();
+    if(runningTimeEntry !== undefined) {
+      let start = runningTimeEntry.value?.runningTimeEntry?.createdAt;
+      const date1Obj = new Date()
+      const date2Obj = new Date(Date.parse(start))
+      let diff = date1Obj.getTime() - date2Obj.getTime();
+      const seconds = Math.floor(diff / 1000)
+      if(seconds) {
+        currentSeconds.value = seconds
+      } else {
+        currentSeconds.value = 0
+      }
+      
+    }
   }, 1000)
 })
 
@@ -138,6 +172,7 @@ function formatTimeDiff(diff: number) {
   const seconds = Math.floor(diff / 1000)
   const minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
+
 
   if (hours > 0) {
     return `${hours}:${minutes % 60}:${seconds % 60}`
