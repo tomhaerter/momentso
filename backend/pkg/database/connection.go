@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"os"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
@@ -19,7 +20,7 @@ type Db struct {
 
 func NewClient() *Db {
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	pool, err := pgxpool.New(ctx, os.Getenv("DSN"))
 	if err != nil {
 		panic(err)
 	}

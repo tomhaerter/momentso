@@ -66,7 +66,13 @@ func main() {
 						return err
 					}
 
-					return seed(context.Context, dbI)
+					err = seed(context.Context, dbI)
+					if err != nil {
+						return err
+					}
+
+					log.Info().Msg("reset, migrated and seeded the database. You can login with {fred,john,sofia}@example.org:1234")
+					return nil
 				},
 			},
 		},
@@ -78,7 +84,7 @@ func main() {
 }
 
 func migrateUp() error {
-	dbI, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	dbI, err := sql.Open("pgx", os.Getenv("DSN"))
 	if err != nil {
 		return err
 	}
