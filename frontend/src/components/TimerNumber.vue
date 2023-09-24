@@ -1,10 +1,10 @@
 <template>
-    <div class="relative h-14 w-3 overflow-hidden">
-        <Transition>
-          <div v-if="number % 2" class="absolute top-1/2 translate-y-[-50%]">{{ number }}</div>
-          <div v-else class="absolute top-1/2 translate-y-[-50%]">{{ number }}</div>
-        </Transition>
-      </div>
+  <div class="relative h-14 w-3 overflow-hidden">
+    <Transition>
+      <div v-if="number % 2" class="absolute top-1/2 translate-y-[-50%]">{{ number }}</div>
+      <div v-else class="absolute top-1/2 translate-y-[-50%]">{{ number }}</div>
+    </Transition>
+  </div>
 </template>
 
 
@@ -20,21 +20,16 @@
   transform: translate(0, 20px);
   opacity: 0;
 }
+
 .v-leave-to {
   transform: translate(0, -40px);
   opacity: 0;
 }
-
 </style>
 
 
 <script lang="ts" setup>
-import { ref, defineProps } from 'vue'
+import { defineProps } from 'vue'
 
-
-defineProps<{
-    number: number
-}>()
-
-
+defineProps<{ number: number }>()
 </script>
