@@ -1,11 +1,14 @@
 <template>
   <div>
-    <form class="flex flex-col" @submit.prevent="onSubmit">
-      <h1 class="text-3xl mb-4">Sign up</h1>
-      <input v-model="email" type="email" name="email" id="email" placeholder="Email">
-      <input v-model="password" type="password" name="password" id="password" placeholder="Password">
-      <button type="submit">Login</button>
-    </form>
+    <div class="max-w-md mx-auto">
+      <form class="flex text-center gap-4 flex-col" @submit.prevent="onSubmit">
+        <h1 class="text-3xl mb-4">Sign up</h1>
+        <input v-model="email" type="email" name="email" id="email" placeholder="Email" autocomplete="username">
+        <input v-model="password" type="password" name="password" id="password" placeholder="Password"
+          autocomplete="new-password">
+        <button type="submit" class="border border-black px-4 py-2">Sign up</button>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -23,7 +26,6 @@ const query = graphql(`mutation signUp($email: String!, $password: String!) {
     token
     user {
       id
-      email
     }
   }
 }`)
@@ -36,6 +38,7 @@ async function onSubmit() {
   const { data, error } = await executeMutation({ email: email.value, password: password.value })
 
   if (error) {
+    alert(error)
     console.log(error)
     return
   }

@@ -9,11 +9,21 @@ function makeClient() {
         url,
         requestPolicy: "cache-and-network",
         exchanges: [
-            cacheExchange(),
+            cacheExchange({
+                updates: {
+                    Mutation: {
+                        updateTimeEntry(_result, args, cache, _info) {
+                            console.log("updateTimeEntry", _result, args, cache, _info)
+                            // cache.invalidate({ __typename: "TimeEntry", id: _result.updateTimeEntry });
+                        }
+                    }
+                }
+            }),
             authExchange(async (utils) => {
                 return {
                     addAuthToOperation(operation) {
-                        const token = localStorage.getItem("authorization");
+                        const token = localStorage.getItem("token");
+
                         if (!token) return operation;
 
                         if (!operation.context.fetchOptions) {

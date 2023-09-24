@@ -13,10 +13,12 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
-    "mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    id\n    description\n    createdAt\n    startedAt\n    completedAt\n  }\n}": types.CreateTimeEntryDocument,
-    "query timeEntries { timeEntries { id } }": types.TimeEntriesDocument,
-    "mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}": types.SignInDocument,
-    "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}": types.SignUpDocument,
+    "query runningTimeEntry {\n  runningTimeEntry {\n    id\n    description\n    createdAt\n  }\n}": types.RunningTimeEntryDocument,
+    "mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}": types.CreateTimeEntryDocument,
+    "mutation updateTimeEntry($id: ID!, $input: UpdateTimeEntryInput!) {\n  updateTimeEntry(id: $id, input: $input) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}": types.UpdateTimeEntryDocument,
+    "query timeEntries {\n  timeEntries {\n    edges {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}": types.TimeEntriesDocument,
+    "mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}": types.SignInDocument,
+    "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}": types.SignUpDocument,
 };
 
 /**
@@ -36,19 +38,27 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    id\n    description\n    createdAt\n    startedAt\n    completedAt\n  }\n}"): (typeof documents)["mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    id\n    description\n    createdAt\n    startedAt\n    completedAt\n  }\n}"];
+export function graphql(source: "query runningTimeEntry {\n  runningTimeEntry {\n    id\n    description\n    createdAt\n  }\n}"): (typeof documents)["query runningTimeEntry {\n  runningTimeEntry {\n    id\n    description\n    createdAt\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "query timeEntries { timeEntries { id } }"): (typeof documents)["query timeEntries { timeEntries { id } }"];
+export function graphql(source: "mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"): (typeof documents)["mutation createTimeEntry($description: String!) {\n  createTimeEntry(input: {description: $description}) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}"): (typeof documents)["mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}"];
+export function graphql(source: "mutation updateTimeEntry($id: ID!, $input: UpdateTimeEntryInput!) {\n  updateTimeEntry(id: $id, input: $input) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"): (typeof documents)["mutation updateTimeEntry($id: ID!, $input: UpdateTimeEntryInput!) {\n  updateTimeEntry(id: $id, input: $input) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}"): (typeof documents)["mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n      email\n    }\n  }\n}"];
+export function graphql(source: "query timeEntries {\n  timeEntries {\n    edges {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"): (typeof documents)["query timeEntries {\n  timeEntries {\n    edges {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"): (typeof documents)["mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"): (typeof documents)["mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

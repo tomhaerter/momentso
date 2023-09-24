@@ -1,8 +1,10 @@
 <template>
-  <div class="flex gap-4 flex-col">
-    <NewTimeEntry></NewTimeEntry>
+  <div class="max-w-4xl mx-auto w-full">
+    <div class="flex gap-4 flex-col">
+      <NewTimeEntry></NewTimeEntry>
 
-    <TimeEntries></TimeEntries>
+      <TimeEntries></TimeEntries>
+    </div>
   </div>
 </template>
 
