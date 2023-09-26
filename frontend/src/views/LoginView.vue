@@ -24,6 +24,9 @@
 import { ref } from 'vue';
 import { useMutation } from '@urql/vue';
 import { graphql } from '@/gql';
+import { useRouter } from 'vue-router';
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -55,5 +58,6 @@ async function onSubmit() {
   }
   localStorage.setItem('token', data?.signIn.token)
   console.log(data)
+  await router.push('/')
 }
 </script>
