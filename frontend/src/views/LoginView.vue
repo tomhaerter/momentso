@@ -58,6 +58,6 @@ async function onSubmit() {
   }
   localStorage.setItem('token', data?.signIn.token)
   console.log(data)
-  await router.push('/')
+  await router.push({ name: 'home' })
 }
 </script>
