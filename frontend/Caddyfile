@@ -1,0 +1,10 @@
+{
+    auto_https disable_redirects
+    auto_https off
+}
+
+:80 {
+    file_server
+    encode zstd gzip
+    try_files {path} /index.html
+}
