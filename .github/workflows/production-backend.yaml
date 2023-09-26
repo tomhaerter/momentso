@@ -7,6 +7,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     environment: production
     concurrency: production-backend
