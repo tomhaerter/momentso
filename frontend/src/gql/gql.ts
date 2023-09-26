@@ -18,7 +18,7 @@ const documents = {
     "mutation updateTimeEntry($id: ID!, $input: UpdateTimeEntryInput!) {\n  updateTimeEntry(id: $id, input: $input) {\n    timeEntry {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}": types.UpdateTimeEntryDocument,
     "query timeEntries {\n  timeEntries {\n    edges {\n      id\n      description\n      createdAt\n      startedAt\n      completedAt\n    }\n  }\n}": types.TimeEntriesDocument,
     "mutation signIn($email: String!, $password: String!) {\n  signIn(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}": types.SignInDocument,
-    "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}": types.SignUpDocument,
+    "\n  mutation signUp($email: String!, $password: String!, $name: String!) {\n    signUp(email: $email, password: $password, name: $name) {\n      token\n      user {\n        id\n      }\n    }\n  }\n": types.SignUpDocument,
 };
 
 /**
@@ -58,7 +58,7 @@ export function graphql(source: "mutation signIn($email: String!, $password: Str
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"): (typeof documents)["mutation signUp($email: String!, $password: String!) {\n  signUp(email: $email, password: $password) {\n    token\n    user {\n      id\n    }\n  }\n}"];
+export function graphql(source: "\n  mutation signUp($email: String!, $password: String!, $name: String!) {\n    signUp(email: $email, password: $password, name: $name) {\n      token\n      user {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation signUp($email: String!, $password: String!, $name: String!) {\n    signUp(email: $email, password: $password, name: $name) {\n      token\n      user {\n        id\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

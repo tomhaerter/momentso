@@ -44,6 +44,10 @@ async function onSubmit() {
   }
 
   console.log(data)
+  if (!data?.signIn) {
+    alert('Invalid credentials')
+    return
+  }
   localStorage.setItem('token', data?.signIn.token)
   console.log(data)
 }
