@@ -34,7 +34,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: frontend
+          context: "{{defaultContext}}:frontend"
           file: Dockerfile
           build-args: |
             VITE_API_URL=https://api.momentso.com/graphql
