@@ -22,7 +22,7 @@ async function login() {
       }
     })
     await refreshSession()
-    await navigateTo("/entries")
+    await navigateTo("/")
   } catch (e) {
     errorMsg.value = "Invalid credentials"
     loading.value = false
