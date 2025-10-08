@@ -1,5 +1,0 @@
-schema: schema.graphql
-documents: '**/*.graphql'
-extensions:
-  endpoints:
-    url: 'http://localhost:8080/graphql'

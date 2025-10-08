@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  /* --font-sans: "Inter", sans-serif; */
+  --font-display: "Inter", "sans-serif";
+}
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
+
+@page {
+  size: A4;
+  margin: 1cm;
+}
+
+@media print {
+  .page-break {
+    -webkit-page-break-after: always;
+    page-break-after: always;
+    break-after: page;
+    display: block;
+    content: "";
+    margin: 0;
+    padding: 0;
+  }
+}
