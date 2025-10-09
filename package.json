@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "format": "prettier --write \"**/*.{ts,tsx,vue,css,md}\""
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
@@ -19,6 +20,7 @@
     "@vueuse/nuxt": "^13.9.0",
     "@vueuse/router": "^13.9.0",
     "auth-utils": "^1.0.0",
+    "camelcase-keys": "^10.0.0",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.6",
     "lexorank": "^1.0.5",
