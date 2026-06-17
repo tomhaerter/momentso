@@ -1,11 +1,11 @@
 import { sessions } from "../database/schema"
-import { eq, isNull } from "drizzle-orm"
+import { eq, isNull, and } from "drizzle-orm"
 
 // server/plugins/session.ts
 export default defineNitroPlugin(() => {
   // Called when the session is fetched during SSR for the Vue composable (/api/_auth/session)
   // Or when we call useUserSession().fetch()
-  sessionHooks.hook("fetch", async (session, event) => {
+  sessionHooks.hook("fetch", async (session, _event) => {
     if (!session.secure) throw createError({ statusCode: 401, message: "Invalid token" })
 
     const existing = await useDrizzle()
@@ -20,7 +20,7 @@ export default defineNitroPlugin(() => {
     if (createdAt < maxAge) throw createError({ statusCode: 401, message: "Invalid token" })
   })
   // Called when we call useUserSession().clear() or clearUserSession(event)
-  sessionHooks.hook("clear", async (session, event) => {
+  sessionHooks.hook("clear", async (session, _event) => {
     // Log that user logged out
     await useDrizzle().update(sessions).set({ deletedAt: new Date() }).where(eq(sessions.token, session.secure!.token))
   })

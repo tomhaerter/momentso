@@ -1,10 +1,10 @@
-import { users } from "../database/schema"
+import { accounts } from "../database/schema"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import type { H3Event } from "h3"
 
 const bodySchema = z.object({
-  email: z.string().email()
+  email: z.email()
 })
 
 export default defineEventHandler(async (event) => {
@@ -50,33 +50,34 @@ async function backgroundProcessEmail({ email }: { email: string }) {
 
 export async function forgotPasswordProcess(email: string) {
   const lowerCaseEmail = email.toLowerCase()
-  const result = await useDrizzle().select().from(users).where(eq(users.email, lowerCaseEmail)).limit(1)
+  const result = await useDrizzle().select().from(accounts).where(eq(accounts.email, lowerCaseEmail)).limit(1)
   if (result.length !== 1) throw createError({ statusCode: 401, message: "Bad credentials" })
-  const user = result[0]
+  const account = result[0]!
+  if (!account) throw createError({ statusCode: 401, message: "Bad credentials" })
 
-  if (!user.email) return {}
+  if (!account.email) return {}
 
-  // Process the user's password reset request
+  // Process the account's password reset request
   // const config = useRuntimeConfig()
 
   // const postmark = usePostmark({ serverToken: config.postmarkServerToken })
 
   const passwordResetToken = nanoid(64)
-  const resetLink = `https://app.momentso.com/reset-password?token=${passwordResetToken}`
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
+  const _resetLink = `https://app.momentso.com/reset-password?token=${passwordResetToken}`
+  const _expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
 
   // Set the reset password token and expiration date
-  // await useDrizzle().update(users).set({ : passwordResetToken, passwordResetExpiresAt: expiresAt }).where(eq(users.id, user.id))
+  // await useDrizzle().update(accounts).set({ resetPasswordToken: passwordResetToken, resetPasswordExpiresAt: _expiresAt }).where(eq(accounts.id, account.id))
 
   try {
     // const emailResult = await resend.sendEmail({
     //   from: "Momentso Support <support@momentso.com>",
-    //   to: user.email,
+    //   to: account.email,
     //   subject: "Reset password",
     //   htmlBody:
-    //     `<p>Hello ${user.name},</p>` +
+    //     `<p>Hello ${account.name},</p>` +
     //     `<p>you have received a request to reset your password for Momentso. To reset your password, please click the following link:</p>` +
-    //     `<p><a href="${resetLink}">Reset password</a></p>` +
+    //   `<p><a href="${_resetLink}">Reset password</a></p>` +
     //     `<p>If you did not request this email, you can ignore it.</p>` +
     //     `<p>Thank you<br />Your Momentso Team</p>`
     // })

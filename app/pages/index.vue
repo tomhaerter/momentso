@@ -14,16 +14,9 @@ const time = ref("00:00:00")
 
 const activeTimeEntryId = ref<string | null>(null)
 
-const projects = ref<any[]>([
-  {
-    value: "1",
-    display: "Project 1"
-  },
-  {
-    value: "2",
-    display: "Project 2"
-  }
-])
+const { data: projectsData } = await useFetch("/api/projects")
+
+const projects = computed(() => (projectsData.value ?? []).map((p) => ({ value: p.id, display: p.name, color: p.color })))
 
 const projectId = ref<string | null>(null)
 
@@ -130,79 +123,47 @@ async function stop() {
   }
 }
 
-function formatEntryTime(entry: any) {
-  if (!entry.startTime || !entry.endTime) return ""
-
-  const timeZone = Temporal.Now.timeZoneId()
-
-  // Parse ISO strings to Instant
-  const startInstant =
-    typeof entry.startTime === "string" ? Temporal.Instant.from(entry.startTime) : Temporal.Instant.fromEpochMilliseconds(entry.startTime.getTime())
-
-  const endInstant = typeof entry.endTime === "string" ? Temporal.Instant.from(entry.endTime) : Temporal.Instant.fromEpochMilliseconds(entry.endTime.getTime())
-
-  const start = startInstant.toZonedDateTimeISO(timeZone)
-  const end = endInstant.toZonedDateTimeISO(timeZone)
-
-  const startTime = `${String(start.hour).padStart(2, "0")}:${String(start.minute).padStart(2, "0")}`
-  const endTime = `${String(end.hour).padStart(2, "0")}:${String(end.minute).padStart(2, "0")}`
-
-  return `${startTime} - ${endTime}`
+async function saveDescription() {
+  if (!activeTimeEntryId.value) return
+  try {
+    await $fetch(`/api/time-entries/${activeTimeEntryId.value}`, {
+      method: "PUT",
+      body: { description: description.value }
+    })
+  } catch (error) {
+    console.error("Failed to save description:", error)
+  }
 }
 
-function formatEntryDuration(entry: any) {
-  if (!entry.startTime || !entry.endTime) return ""
-
-  // Parse ISO strings to Instant
-  const startInstant =
-    typeof entry.startTime === "string" ? Temporal.Instant.from(entry.startTime) : Temporal.Instant.fromEpochMilliseconds(entry.startTime.getTime())
-
-  const endInstant = typeof entry.endTime === "string" ? Temporal.Instant.from(entry.endTime) : Temporal.Instant.fromEpochMilliseconds(entry.endTime.getTime())
-
-  const duration = endInstant.since(startInstant)
-
-  const hours = Math.floor(duration.total("hours"))
-  const minutes = Math.floor(duration.total("minutes")) % 60
-  const seconds = Math.floor(duration.total("seconds")) % 60
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+async function resumeEntry(entry: { description: string | null; projectId: string | null }) {
+  // If a timer is already running, stop it first
+  if (activeTimeEntryId.value) {
+    await stop()
+  }
+  // Pre-fill the description and project from the past entry
+  description.value = entry.description ?? ""
+  projectId.value = entry.projectId ?? null
+  // Start a new timer with the old entry's data
+  await start()
 }
 </script>
 
 <template>
   <DPage>
-    <header class="px-2 pt-2.5 pb-0 sm:px-4">
-      <div class="flex h-10 items-start justify-between gap-2 border-b border-neutral-200 pb-2 sm:items-center">
-        <div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
-          <DInput v-model="description" class="w-full" placeholder="What are you working on?" />
-          <DSelect v-model="projectId" placeholder="Select a project" :options="projects" />
-          <DInput type="time" step="1" v-model="time" />
-        </div>
-        <div class="flex items-start justify-end gap-2 sm:items-center">
-          <DButton v-if="!startTime" @click="start">Start</DButton>
-          <DButton v-else @click="stop">Stop</DButton>
-        </div>
+    <header class="flex h-[55px] items-center justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-4">
+      <div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
+        <DInput v-model="description" class="w-full" placeholder="What are you working on?" @blur="saveDescription" />
+        <DSelect v-model="projectId" placeholder="Select a project" :options="projects" class="w-60 shrink-0" />
+        <DInput type="time" step="1" v-model="time" class="tabular-nums" />
+      </div>
+      <div class="flex items-start justify-end gap-2 sm:items-center">
+        <DButton v-if="!startTime" @click="start">Start</DButton>
+        <DButton v-else variant="danger" @click="stop">Stop</DButton>
       </div>
     </header>
 
-    <div class="block min-h-0 px-4 pt-2.5">
-      <div class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center justify-between gap-4 border-b border-neutral-200 px-2 pb-2">
-        <div class="border-r border-neutral-200 text-sm font-medium text-neutral-900">Description</div>
-        <div class="border-r border-neutral-200 text-sm font-medium text-neutral-900">Time</div>
-        <div class="border-r border-neutral-200 text-sm font-medium text-neutral-900">Duration</div>
-        <div class="text-sm font-medium text-neutral-900">Project</div>
-      </div>
-    </div>
-
     <DPageContent>
-      <div v-if="pastEntries">
-        <div v-for="entry in pastEntries" :key="entry.id" class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 rounded px-2 py-2 hover:bg-neutral-100">
-          <div class="line-clamp-1 text-neutral-700">{{ entry.description ? entry.description : "N/A" }}</div>
-          <div class="text-neutral-500 tabular-nums">{{ formatEntryTime(entry) }}</div>
-          <div class="text-neutral-700 tabular-nums">{{ formatEntryDuration(entry) }}</div>
-          <div class="text-neutral-700">{{ entry.projectId }}</div>
-        </div>
-      </div>
+      <TimeEntriesTable :entries="pastEntries" @saved="refreshAllEntries" @resume="resumeEntry" />
     </DPageContent>
   </DPage>
 </template>

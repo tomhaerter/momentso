@@ -1,10 +1,11 @@
 import { drizzle } from "drizzle-orm/node-postgres"
 import * as schema from "../database/schema"
+import { relations } from "../database/relations"
 export { sql, eq, and, or, gt, lt, gte, lte } from "drizzle-orm"
 
 export const tables = schema
 
-const database = drizzle(process.env.NUXT_DSN!, { schema, casing: "snake_case" })
+const database = drizzle(process.env.NUXT_DSN!, { relations })
 
 export function useDrizzle() {
   return database

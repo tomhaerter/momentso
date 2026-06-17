@@ -1,12 +1,10 @@
 <template>
-  <header class="px-2 pt-2.5 pb-0 sm:px-4">
-    <div class="flex h-10 items-start justify-between gap-2 border-b border-neutral-200 pb-2 pl-2 sm:items-center">
-      <div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
-        <slot></slot>
-      </div>
-      <div class="flex w-full items-start justify-end gap-2 sm:items-center">
-        <slot name="right"></slot>
-      </div>
+  <header class="flex h-[55px] items-center justify-between border-b border-neutral-200 bg-neutral-50 px-4">
+    <div class="flex w-full items-center gap-2">
+      <slot></slot>
+    </div>
+    <div class="flex items-center gap-2">
+      <slot name="right"></slot>
     </div>
   </header>
 </template>

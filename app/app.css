@@ -11,6 +11,11 @@ body,
   height: 100%;
 }
 
+/* Only show focus outlines when navigating with keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 @page {
   size: A4;
   margin: 1cm;

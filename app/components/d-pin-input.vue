@@ -17,9 +17,8 @@ const inputRef = useTemplateRef("inputs")
 
 onMounted(() => {
   // focus the first input
-  // @ts-ignore
-  const firstInput = inputRef.value[0]
-  firstInput.focus()
+  const firstInput = inputRef.value?.[0]
+  firstInput?.focus()
 })
 
 function handlePaste(e: ClipboardEvent) {
@@ -33,9 +32,8 @@ function handlePaste(e: ClipboardEvent) {
 
     // focus the next input
     if (pastedValues.length < 6) {
-      // @ts-ignore
-      const nextInput = inputRef.value[pastedValues.length]
-      nextInput.focus()
+      const nextInput = inputRef.value?.[pastedValues.length]
+      nextInput?.focus()
     }
   }
 }
@@ -50,9 +48,8 @@ function handleInput(e: Event, index: number) {
 
   // focus the next input
   if (index < 5) {
-    // @ts-ignore
-    const nextInput = inputRef.value[index + 1]
-    nextInput.focus()
+    const nextInput = inputRef.value?.[index + 1]
+    nextInput?.focus()
   }
 }
 </script>

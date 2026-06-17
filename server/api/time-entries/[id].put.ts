@@ -3,10 +3,15 @@ import { timeEntries } from "~~/server/database/schema"
 import { z } from "zod"
 
 const timeEntrySchema = z.object({
-  description: z.string().optional(),
-  startTime: z.coerce.date().optional(),
-  endTime: z.coerce.date().optional(),
-  projectId: z.string().uuid().nullable().optional()
+  description: z.string().nullable().optional(),
+  startTime: z.coerce.date().nullable().optional(),
+  endTime: z.coerce.date().nullable().optional(),
+  projectId: z.uuid().nullable().optional(),
+  // Apply a date (YYYY-MM-DD) to both start and end times, preserving HH:MM:SS
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
 })
 
 export default defineEventHandler(async (event) => {
@@ -17,12 +22,39 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 400, message: "Missing id" })
 
   try {
-    const timeEntry = await readValidatedBody(event, timeEntrySchema.parse)
+    const body = await readValidatedBody(event, timeEntrySchema.parse)
+
+    let updateData: Record<string, unknown> = { ...body }
+
+    if (body.date) {
+      const [y, m, d] = body.date.split("-").map(Number) as [number, number, number]
+
+      const [existing] = await useDrizzle()
+        .select()
+        .from(timeEntries)
+        .where(and(eq(timeEntries.id, id), eq(timeEntries.workspaceId, secure.workspaceId)))
+        .limit(1)
+
+      if (!existing) throw createError({ statusCode: 404, message: "Time entry not found" })
+
+      if (existing.startTime) {
+        const dt = new Date(existing.startTime)
+        dt.setFullYear(y, m - 1, d)
+        updateData.startTime = dt
+      }
+      if (existing.endTime) {
+        const dt = new Date(existing.endTime)
+        dt.setFullYear(y, m - 1, d)
+        updateData.endTime = dt
+      }
+
+      delete updateData.date
+    }
 
     const [result] = await useDrizzle()
       .update(timeEntries)
-      .set(timeEntry)
-      .where(and(eq(timeEntries.id, id), eq(timeEntries.organisationId, secure.organisationId)))
+      .set(updateData)
+      .where(and(eq(timeEntries.id, id), eq(timeEntries.workspaceId, secure.workspaceId)))
       .returning()
 
     if (!result) {

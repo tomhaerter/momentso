@@ -6,7 +6,7 @@ const timeEntrySchema = z.object({
   description: z.string().optional(),
   startTime: z.coerce.date().optional(),
   endTime: z.coerce.date().optional(),
-  projectId: z.string().uuid().nullable().optional()
+  projectId: z.uuid().nullable().optional()
 })
 
 export default defineEventHandler(async (event) => {
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
       const activeTimers = await useDrizzle()
         .select()
         .from(timeEntries)
-        .where(and(eq(timeEntries.organisationId, secure.organisationId), isNull(timeEntries.endTime)))
+        .where(and(eq(timeEntries.workspaceId, secure.workspaceId), isNull(timeEntries.endTime)))
 
       if (activeTimers.length > 0) {
         throw createError({ statusCode: 400, message: "An active timer already exists" })
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       .insert(timeEntries)
       .values({
         ...timeEntry,
-        organisationId: secure.organisationId
+        workspaceId: secure.workspaceId
       })
       .returning()
 

@@ -1,6 +1,6 @@
 const publicRoutes = ["/login", "/logout", "/register", "/up", "/forgot-password", "/reset-password"]
 
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineNuxtRouteMiddleware(async (to, _from) => {
   if (to.path === "/logout") {
     await $fetch("/api/logout", { method: "POST" })
 

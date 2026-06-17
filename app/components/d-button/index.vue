@@ -19,7 +19,7 @@ const { variant = "primary", type = "button", loading = false, size = "md" } = d
     :is="to ? RouterLink : 'button'"
     :type
     :to
-    class="relative flex cursor-default items-center justify-center gap-2 rounded-md py-1.5 text-sm ring-blue-600 ring-offset-2 outline-none focus:ring-2"
+    class="relative flex shrink-0 cursor-default items-center justify-center gap-2 self-center rounded-md py-1.5 text-sm ring-blue-600 ring-offset-2 outline-none focus:ring-2"
     :class="[
       variant === 'primary' ? 'bg-neutral-900 text-neutral-50 hover:bg-neutral-700' : '',
       variant === 'secondary' ? 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200' : '',
@@ -33,10 +33,8 @@ const { variant = "primary", type = "button", loading = false, size = "md" } = d
       $slots.default ? 'px-2.5' : ''
     ]"
   >
-    <component v-if="iconLeft" :is="iconLeft" class="mx-auto size-4" :class="{ 'opacity-0': loading }" />
-    <div v-if="$slots.default" class="inline leading-0" :class="{ 'opacity-0': loading }">
-      <slot></slot>
-    </div>
+    <component v-if="iconLeft" :is="iconLeft" class="size-4" :class="{ 'opacity-0': loading }" />
+    <slot v-if="!loading"></slot>
     <div v-if="loading" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
       <LoaderCircleIcon class="size-5 animate-spin" />
     </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { XIcon } from "lucide-vue-next"
-import { onClickOutside, onKeyDown } from "@vueuse/core"
+import { DialogRoot, DialogPortal, DialogOverlay, DialogContent, DialogTitle, DialogClose } from "reka-ui"
 
 interface Props {
   titel: string
@@ -13,8 +13,6 @@ withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(["close", "confirm"])
 
-const dialog = ref<HTMLElement | null>(null)
-
 function close() {
   emit("close")
 }
@@ -22,34 +20,33 @@ function close() {
 function save() {
   emit("confirm")
 }
-
-onClickOutside(dialog, () => emit("close"))
-onKeyDown("Escape", () => emit("close"))
 </script>
 
 <template>
-  <Teleport to="body">
-    <div>
-      <div class="fixed inset-0 z-50 bg-black/10"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4 text-center">
-          <div class="max-h-[90vh] w-full max-w-md">
-            <div ref="dialog" class="relative rounded-md bg-white shadow">
-              <div class="flex items-center justify-between rounded-t border-b border-neutral-200 px-4 py-2.5">
-                <h3 class="text-base font-medium text-neutral-900">{{ titel }}</h3>
-                <DButton :icon-left="XIcon" variant="secondary" class="!p-1" @click="close"></DButton>
-              </div>
-              <div class="items-start space-y-6 overflow-auto text-left">
-                <slot></slot>
-              </div>
-              <div class="flex justify-end space-x-2 rounded-b border-t border-neutral-200 p-4">
-                <DButton variant="secondary" @click="close">Abbrechen</DButton>
-                <DButton variant="primary" @click="save">{{ confirmText }}</DButton>
-              </div>
-            </div>
-          </div>
+  <DialogRoot :default-open="true" @update:open="(v) => !v && close()">
+    <DialogPortal>
+      <DialogOverlay
+        class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 fixed inset-0 z-50 bg-black/10"
+      />
+      <DialogContent
+        class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md bg-white shadow focus:outline-none"
+      >
+        <div class="flex items-center justify-between rounded-t border-b border-neutral-200 px-4 py-2.5">
+          <DialogTitle class="text-base font-medium text-neutral-900">{{ titel }}</DialogTitle>
+          <DialogClose as-child>
+            <DButton :icon-left="XIcon" variant="secondary" class="!p-1" aria-label="Close" />
+          </DialogClose>
         </div>
-      </div>
-    </div>
-  </Teleport>
+        <div class="items-start space-y-6 overflow-auto text-left">
+          <slot></slot>
+        </div>
+        <div class="flex justify-end space-x-2 rounded-b border-t border-neutral-200 p-4">
+          <DialogClose as-child>
+            <DButton variant="secondary" @click="close">Abbrechen</DButton>
+          </DialogClose>
+          <DButton variant="primary" @click="save">{{ confirmText }}</DButton>
+        </div>
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
 </template>
