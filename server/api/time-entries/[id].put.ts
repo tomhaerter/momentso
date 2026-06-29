@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm"
-import { timeEntries } from "~~/server/database/schema"
+import { timeEntries, users } from "~~/server/database/schema"
 import { z } from "zod"
 
 const timeEntrySchema = z.object({
@@ -24,26 +24,36 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readValidatedBody(event, timeEntrySchema.parse)
 
+    // Check ownership or owner override
+    const [existing] = await useDrizzle()
+      .select({
+        entry: timeEntries,
+        role: users.role
+      })
+      .from(timeEntries)
+      .innerJoin(users, eq(timeEntries.userId, users.id))
+      .where(and(eq(timeEntries.id, id), eq(timeEntries.workspaceId, secure.workspaceId)))
+      .limit(1)
+
+    if (!existing) throw createError({ statusCode: 404, message: "Time entry not found" })
+
+    const isOwner = existing.role === "owner"
+    if (existing.entry.userId !== secure.userId && !isOwner) {
+      throw createError({ statusCode: 403, message: "Not allowed to edit this time entry" })
+    }
+
     let updateData: Record<string, unknown> = { ...body }
 
     if (body.date) {
       const [y, m, d] = body.date.split("-").map(Number) as [number, number, number]
 
-      const [existing] = await useDrizzle()
-        .select()
-        .from(timeEntries)
-        .where(and(eq(timeEntries.id, id), eq(timeEntries.workspaceId, secure.workspaceId)))
-        .limit(1)
-
-      if (!existing) throw createError({ statusCode: 404, message: "Time entry not found" })
-
-      if (existing.startTime) {
-        const dt = new Date(existing.startTime)
+      if (existing.entry.startTime) {
+        const dt = new Date(existing.entry.startTime)
         dt.setFullYear(y, m - 1, d)
         updateData.startTime = dt
       }
-      if (existing.endTime) {
-        const dt = new Date(existing.endTime)
+      if (existing.entry.endTime) {
+        const dt = new Date(existing.entry.endTime)
         dt.setFullYear(y, m - 1, d)
         updateData.endTime = dt
       }

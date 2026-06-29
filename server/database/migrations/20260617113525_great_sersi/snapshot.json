@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "52a935cb-b74b-46ad-9dc1-1c0332d21b01",
+  "id": "820f17e3-5bd2-4a5d-a350-9e303064c03b",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -57,7 +57,13 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "workspace_users",
+      "name": "users",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "workspace_invites",
       "entityType": "tables",
       "schema": "public"
     },
@@ -400,6 +406,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "workspace_id",
       "entityType": "columns",
       "schema": "public",
@@ -517,6 +536,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "time_entries"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "workspace_id",
       "entityType": "columns",
       "schema": "public",
@@ -572,7 +604,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "uuid",
@@ -585,7 +617,7 @@
       "name": "account_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "uuid",
@@ -598,7 +630,7 @@
       "name": "workspace_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "workspace_user_role",
@@ -611,7 +643,7 @@
       "name": "role",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "timestamp with time zone",
@@ -624,7 +656,7 @@
       "name": "created_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "timestamp with time zone",
@@ -637,7 +669,7 @@
       "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "type": "timestamp with time zone",
@@ -650,7 +682,163 @@
       "name": "deleted_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspace_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "workspace_user_role",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'member'",
+      "generated": null,
+      "identity": null,
+      "name": "role",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accepted_by",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accepted_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "workspace_invites"
     },
     {
       "type": "uuid",
@@ -757,6 +945,48 @@
       "table": "workspaces"
     },
     {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "users_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "users"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "token",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "workspace_invites_token_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
       "nameExplicit": false,
       "columns": [
         "workspace_id"
@@ -827,6 +1057,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "user_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "sessions_user_id_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "workspace_id"
       ],
       "schemaTo": "public",
@@ -861,6 +1108,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "user_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "time_entries_user_id_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "time_entries"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "workspace_id"
       ],
       "schemaTo": "public",
@@ -887,10 +1151,10 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
-      "name": "workspace_users_account_id_accounts_id_fkey",
+      "name": "users_account_id_accounts_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "nameExplicit": false,
@@ -904,10 +1168,61 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
-      "name": "workspace_users_workspace_id_workspaces_id_fkey",
+      "name": "users_workspace_id_workspaces_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspace_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "workspaces",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "workspace_invites_workspace_id_workspaces_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "created_by"
+      ],
+      "schemaTo": "public",
+      "tableTo": "accounts",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "workspace_invites_created_by_accounts_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "workspace_invites"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "accepted_by"
+      ],
+      "schemaTo": "public",
+      "tableTo": "accounts",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "workspace_invites_accepted_by_accounts_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "workspace_invites"
     },
     {
       "columns": [
@@ -926,10 +1241,10 @@
         "workspace_id"
       ],
       "nameExplicit": false,
-      "name": "workspace_users_pkey",
+      "name": "users_pkey",
       "entityType": "pks",
       "schema": "public",
-      "table": "workspace_users"
+      "table": "users"
     },
     {
       "columns": [
@@ -976,6 +1291,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "workspace_invites_pkey",
+      "schema": "public",
+      "table": "workspace_invites",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "workspaces_pkey",
       "schema": "public",
       "table": "workspaces",
@@ -1001,6 +1326,17 @@
       "name": "sessions_token_key",
       "schema": "public",
       "table": "sessions",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "token"
+      ],
+      "nullsNotDistinct": false,
+      "name": "workspace_invites_token_key",
+      "schema": "public",
+      "table": "workspace_invites",
       "entityType": "uniques"
     },
     {

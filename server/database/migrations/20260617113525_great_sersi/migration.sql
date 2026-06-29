@@ -35,6 +35,7 @@ CREATE TABLE "projects" (
 CREATE TABLE "sessions" (
 	"token" text UNIQUE,
 	"account_id" uuid,
+	"user_id" uuid NOT NULL,
 	"workspace_id" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -48,13 +49,14 @@ CREATE TABLE "time_entries" (
 	"start_time" timestamp with time zone,
 	"end_time" timestamp with time zone,
 	"project_id" uuid,
+	"user_id" uuid NOT NULL,
 	"workspace_id" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
-CREATE TABLE "workspace_users" (
+CREATE TABLE "users" (
 	"id" uuid NOT NULL,
 	"account_id" uuid,
 	"workspace_id" uuid,
@@ -62,7 +64,22 @@ CREATE TABLE "workspace_users" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
-	CONSTRAINT "workspace_users_pkey" PRIMARY KEY("account_id","workspace_id")
+	CONSTRAINT "users_pkey" PRIMARY KEY("account_id","workspace_id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_invites" (
+	"id" uuid PRIMARY KEY,
+	"workspace_id" uuid NOT NULL,
+	"email" text NOT NULL,
+	"token" text NOT NULL UNIQUE,
+	"role" "workspace_user_role" DEFAULT 'member'::"workspace_user_role" NOT NULL,
+	"created_by" uuid NOT NULL,
+	"accepted_by" uuid,
+	"accepted_at" timestamp with time zone,
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "workspaces" (
@@ -76,12 +93,19 @@ CREATE TABLE "workspaces" (
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX "users_id_idx" ON "users" ("id");--> statement-breakpoint
+CREATE UNIQUE INDEX "workspace_invites_token_idx" ON "workspace_invites" ("token");--> statement-breakpoint
 ALTER TABLE "clients" ADD CONSTRAINT "clients_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
 ALTER TABLE "projects" ADD CONSTRAINT "projects_client_id_clients_id_fkey" FOREIGN KEY ("client_id") REFERENCES "clients"("id");--> statement-breakpoint
 ALTER TABLE "projects" ADD CONSTRAINT "projects_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_account_id_accounts_id_fkey" FOREIGN KEY ("account_id") REFERENCES "accounts"("id");--> statement-breakpoint
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
 ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_project_id_projects_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id");--> statement-breakpoint
+ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
-ALTER TABLE "workspace_users" ADD CONSTRAINT "workspace_users_account_id_accounts_id_fkey" FOREIGN KEY ("account_id") REFERENCES "accounts"("id");--> statement-breakpoint
-ALTER TABLE "workspace_users" ADD CONSTRAINT "workspace_users_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");
+ALTER TABLE "users" ADD CONSTRAINT "users_account_id_accounts_id_fkey" FOREIGN KEY ("account_id") REFERENCES "accounts"("id");--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
+ALTER TABLE "workspace_invites" ADD CONSTRAINT "workspace_invites_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id");--> statement-breakpoint
+ALTER TABLE "workspace_invites" ADD CONSTRAINT "workspace_invites_created_by_accounts_id_fkey" FOREIGN KEY ("created_by") REFERENCES "accounts"("id");--> statement-breakpoint
+ALTER TABLE "workspace_invites" ADD CONSTRAINT "workspace_invites_accepted_by_accounts_id_fkey" FOREIGN KEY ("accepted_by") REFERENCES "accounts"("id");

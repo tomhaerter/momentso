@@ -11,7 +11,7 @@ import {
 
 const { user } = useUserSession()
 
-const { data: workspaces, refresh: refreshWorkspaces } = await useFetch("/api/workspaces")
+const { data: workspaces, refresh: refreshWorkspaces } = await useWorkspaces()
 
 const currentWorkspaceName = computed(() => {
   const ws = workspaces.value?.find((w) => w.id === user.value?.workspaceId)

@@ -10,7 +10,11 @@ export default defineEventHandler(async (event) => {
   const projectId = typeof query.projectId === "string" ? query.projectId : undefined
   const clientId = typeof query.clientId === "string" ? query.clientId : undefined
 
-  const conditions = [eq(timeEntries.workspaceId, secure.workspaceId), isNull(timeEntries.deletedAt)]
+  const conditions = [
+    eq(timeEntries.workspaceId, secure.workspaceId),
+    eq(timeEntries.userId, secure.userId),
+    isNull(timeEntries.deletedAt)
+  ]
 
   if (active) {
     conditions.push(isNull(timeEntries.endTime))

@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm"
-import { sessions, workspaceUsers, workspaces } from "~~/server/database/schema"
+import { sessions, users, workspaces } from "~~/server/database/schema"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
   // Verify the account has access to the target workspace
   const [membership] = await useDrizzle()
     .select()
-    .from(workspaceUsers)
-    .where(and(eq(workspaceUsers.accountId, user.id), eq(workspaceUsers.workspaceId, workspaceId)))
+    .from(users)
+    .where(and(eq(users.accountId, user.id), eq(users.workspaceId, workspaceId)))
     .limit(1)
 
   if (!membership) throw createError({ statusCode: 403, message: "No access to this workspace" })
@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
     .values({
       token: nanoid(64),
       accountId: user.id,
+      userId: membership.id,
       workspaceId: workspace.id
     })
     .returning()
@@ -57,11 +58,13 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: membership.id
     },
     secure: {
       token: session.token,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: membership.id
     }
   })
 

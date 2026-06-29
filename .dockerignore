@@ -1,0 +1,28 @@
+# Dependencies & build artifacts (regenerated inside the image)
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+dist
+
+# VCS & editor
+.git
+.gitignore
+.fleet
+.idea
+.DS_Store
+
+# Logs
+*.log
+logs
+
+# Local env files (provided at runtime instead)
+.env
+.env.*
+!.env.example
+
+# Misc
+storage
+*.sqlite3
+database.sqlite3

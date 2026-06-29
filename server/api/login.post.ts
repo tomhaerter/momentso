@@ -1,4 +1,4 @@
-import { accounts, sessions, workspaceUsers, workspaces } from "../database/schema"
+import { accounts, sessions, users, workspaces } from "../database/schema"
 import { eq, asc } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
@@ -25,17 +25,19 @@ export default defineEventHandler(async (event) => {
   // Pick a workspace the account belongs to (oldest membership first)
   const [membership] = await useDrizzle()
     .select({
+      user: users,
       workspace: workspaces
     })
-    .from(workspaceUsers)
-    .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
-    .where(eq(workspaceUsers.accountId, account.id))
-    .orderBy(asc(workspaceUsers.createdAt))
+    .from(users)
+    .innerJoin(workspaces, eq(users.workspaceId, workspaces.id))
+    .where(eq(users.accountId, account.id))
+    .orderBy(asc(users.createdAt))
     .limit(1)
 
   if (!membership) throw createError({ statusCode: 403, message: "Account has no workspaces" })
 
   const workspace = membership.workspace
+  const userRow = membership.user
 
   // Create a session bound to the workspace
   const [session] = await useDrizzle()
@@ -43,6 +45,7 @@ export default defineEventHandler(async (event) => {
     .values({
       token: nanoid(64),
       accountId: account.id,
+      userId: userRow.id,
       workspaceId: workspace.id
     })
     .returning()
@@ -54,11 +57,13 @@ export default defineEventHandler(async (event) => {
       id: account.id,
       name: account.name,
       email: account.email!,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: userRow.id
     },
     secure: {
       token: session.token,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: userRow.id
     }
   })
 

@@ -23,7 +23,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // TODO: Stripe
-    // TODO: Resend
+    resendApiKey: process.env.RESEND_API_KEY,
+    resendFrom: process.env.RESEND_FROM || "Momentso <noreply@app.momentso.com>",
+    appUrl: process.env.APP_URL || "http://localhost:3000"
   },
 
   app: {

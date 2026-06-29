@@ -5,6 +5,7 @@ declare module "#auth-utils" {
     name: string
     email: string
     workspaceId: string
+    userId: string
   }
 
   interface UserSession {}
@@ -12,6 +13,7 @@ declare module "#auth-utils" {
   interface SecureSessionData {
     token: string
     workspaceId: string
+    userId: string
   }
 }
 

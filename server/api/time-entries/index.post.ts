@@ -32,7 +32,8 @@ export default defineEventHandler(async (event) => {
       .insert(timeEntries)
       .values({
         ...timeEntry,
-        workspaceId: secure.workspaceId
+        workspaceId: secure.workspaceId,
+        userId: secure.userId
       })
       .returning()
 

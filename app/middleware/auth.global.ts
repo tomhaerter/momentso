@@ -1,4 +1,4 @@
-const publicRoutes = ["/login", "/logout", "/register", "/up", "/forgot-password", "/reset-password"]
+const publicRoutes = ["/login", "/logout", "/register", "/up", "/join", "/forgot-password", "/reset-password"]
 
 export default defineNuxtRouteMiddleware(async (to, _from) => {
   if (to.path === "/logout") {

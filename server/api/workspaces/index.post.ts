@@ -1,4 +1,4 @@
-import { accounts, workspaces, workspaceUsers } from "~~/server/database/schema"
+import { workspaces, users } from "~~/server/database/schema"
 import { z } from "zod"
 
 const bodySchema = z.object({
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   if (!workspace) throw createError({ statusCode: 500, message: "Failed to create workspace" })
 
   // Link account to workspace as owner
-  await useDrizzle().insert(workspaceUsers).values({
+  await useDrizzle().insert(users).values({
     accountId: user.id,
     workspaceId: workspace.id,
     role: "owner"

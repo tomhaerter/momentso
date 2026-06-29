@@ -1,4 +1,4 @@
-import { accounts, sessions, workspaces, workspaceUsers } from "~~/server/database/schema"
+import { accounts, sessions, workspaces, users } from "~~/server/database/schema"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
@@ -41,17 +41,23 @@ export default defineEventHandler(async (event) => {
   if (!account) throw createError({ statusCode: 500, message: "Failed to create account" })
 
   // Link account to workspace as owner
-  await useDrizzle().insert(workspaceUsers).values({
-    accountId: account.id,
-    workspaceId: workspace.id,
-    role: "owner"
-  })
+  const [userRow] = await useDrizzle()
+    .insert(users)
+    .values({
+      accountId: account.id,
+      workspaceId: workspace.id,
+      role: "owner"
+    })
+    .returning()
+
+  if (!userRow) throw createError({ statusCode: 500, message: "Failed to create user membership" })
 
   const [session] = await useDrizzle()
     .insert(sessions)
     .values({
       token: nanoid(64),
       accountId: account.id,
+      userId: userRow.id,
       workspaceId: workspace.id
     })
     .returning()
@@ -63,11 +69,13 @@ export default defineEventHandler(async (event) => {
       id: account.id,
       name: account.name,
       email: account.email!,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: userRow.id
     },
     secure: {
       token: session.token,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      userId: userRow.id
     }
   })
 

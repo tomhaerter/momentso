@@ -1,4 +1,4 @@
-import { pgTable, timestamp, text, primaryKey, uuid, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, timestamp, text, primaryKey, uuid, pgEnum, uniqueIndex } from "drizzle-orm/pg-core"
 import { uuidv7 } from "uuidv7"
 
 // Helpers — column names are explicitly aliased to snake_case to match DB
@@ -40,8 +40,8 @@ export const workspaces = pgTable("workspaces", {
   ...timestamps
 })
 
-export const workspaceUsers = pgTable(
-  "workspace_users",
+export const users = pgTable(
+  "users",
   {
     id: uuid().primaryKey().$defaultFn(uuidv7),
     accountId: uuid("account_id")
@@ -53,7 +53,10 @@ export const workspaceUsers = pgTable(
     role: workspaceUserRoleEnum("role").notNull().default("member"),
     ...timestamps
   },
-  (t) => [primaryKey({ columns: [t.accountId, t.workspaceId] })]
+  (t) => [
+    primaryKey({ columns: [t.accountId, t.workspaceId] }),
+    uniqueIndex("users_id_idx").on(t.id)
+  ]
 )
 
 export const sessions = pgTable(
@@ -63,6 +66,9 @@ export const sessions = pgTable(
     accountId: uuid("account_id")
       .notNull()
       .references(() => accounts.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id),
@@ -93,6 +99,30 @@ export const timeEntries = pgTable("time_entries", {
   startTime: timestamp("start_time", { withTimezone: true }),
   endTime: timestamp("end_time", { withTimezone: true }),
   projectId: uuid("project_id").references(() => projects.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
   ...workspaceId,
   ...timestamps
 })
+
+export const workspaceInvites = pgTable(
+  "workspace_invites",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id),
+    email: text().notNull(),
+    token: text().notNull().unique(),
+    role: workspaceUserRoleEnum("role").notNull().default("member"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => accounts.id),
+    acceptedBy: uuid("accepted_by").references(() => accounts.id),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps
+  },
+  (t) => [uniqueIndex("workspace_invites_token_idx").on(t.token)]
+)

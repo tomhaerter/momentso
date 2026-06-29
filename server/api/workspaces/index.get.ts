@@ -1,5 +1,5 @@
 import { eq, asc } from "drizzle-orm"
-import { workspaceUsers, workspaces } from "~~/server/database/schema"
+import { users, workspaces } from "~~/server/database/schema"
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
@@ -9,12 +9,12 @@ export default defineEventHandler(async (event) => {
     .select({
       id: workspaces.id,
       name: workspaces.name,
-      role: workspaceUsers.role
+      role: users.role
     })
-    .from(workspaceUsers)
-    .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
-    .where(eq(workspaceUsers.accountId, user.id))
-    .orderBy(asc(workspaceUsers.createdAt))
+    .from(users)
+    .innerJoin(workspaces, eq(users.workspaceId, workspaces.id))
+    .where(eq(users.accountId, user.id))
+    .orderBy(asc(users.createdAt))
 
   return rows
 })
