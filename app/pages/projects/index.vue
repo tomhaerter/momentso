@@ -15,27 +15,6 @@ const clientById = computed(() => {
 
 const clientOptions = computed(() => [{ value: null, display: "No client" }, ...(clients.value ?? []).map((c) => ({ value: c.id, display: c.name }))])
 
-const colorOptions = [
-  { value: "red", display: "red" },
-  { value: "orange", display: "orange" },
-  { value: "amber", display: "amber" },
-  { value: "yellow", display: "yellow" },
-  { value: "lime", display: "lime" },
-  { value: "green", display: "green" },
-  { value: "emerald", display: "emerald" },
-  { value: "teal", display: "teal" },
-  { value: "cyan", display: "cyan" },
-  { value: "sky", display: "sky" },
-  { value: "blue", display: "blue" },
-  { value: "indigo", display: "indigo" },
-  { value: "violet", display: "violet" },
-  { value: "purple", display: "purple" },
-  { value: "fuchsia", display: "fuchsia" },
-  { value: "pink", display: "pink" },
-  { value: "rose", display: "rose" },
-  { value: "gray", display: "gray" }
-]
-
 async function saveClient(projectId: string, clientId: string | null) {
   try {
     await $fetch(`/api/projects/${projectId}`, {
@@ -135,13 +114,13 @@ function closeModal() {
           >
             <template #trigger="{ option }">
               <div class="flex items-center gap-2">
-                <div class="size-3 shrink-0 rounded-full" :class="`bg-${option?.display ?? 'gray'}-500`" />
+                <div class="size-3 shrink-0 rounded-full" :class="colorDotClass(option?.display ?? 'gray')" />
                 <span class="capitalize">{{ option?.display ?? "gray" }}</span>
               </div>
             </template>
             <template #item="{ option }">
               <div class="flex items-center gap-2">
-                <div class="size-3 shrink-0 rounded-full" :class="`bg-${option.display}-500`" />
+                <div class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.display)" />
                 <span class="capitalize">{{ option.display }}</span>
               </div>
             </template>
@@ -168,13 +147,13 @@ function closeModal() {
           <DSelect v-model="newColor" :options="colorOptions" placeholder="gray">
             <template #trigger="{ option }">
               <div class="flex items-center gap-2">
-                <div class="size-3 shrink-0 rounded-full" :class="`bg-${option?.display ?? 'gray'}-500`" />
+                <div class="size-3 shrink-0 rounded-full" :class="colorDotClass(option?.display ?? 'gray')" />
                 <span class="capitalize">{{ option?.display ?? "gray" }}</span>
               </div>
             </template>
             <template #item="{ option }">
               <div class="flex items-center gap-2">
-                <div class="size-3 shrink-0 rounded-full" :class="`bg-${option.display}-500`" />
+                <div class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.display)" />
                 <span class="capitalize">{{ option.display }}</span>
               </div>
             </template>
