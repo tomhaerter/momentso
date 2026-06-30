@@ -209,7 +209,20 @@ const inputClass =
             placeholder="No project"
             class="w-full"
             @update:model-value="(v: string | null | undefined) => saveProject(entry, v ?? null)"
-          />
+          >
+            <template #trigger="{ option }">
+              <div class="flex items-center gap-2">
+                <div v-if="option?.color" class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.color)" />
+                <span class="truncate">{{ option?.display ?? "No project" }}</span>
+              </div>
+            </template>
+            <template #item="{ option }">
+              <div class="flex items-center gap-2">
+                <div v-if="option.color" class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.color)" />
+                <span class="truncate">{{ option.display }}</span>
+              </div>
+            </template>
+          </DSelect>
         </div>
 
         <!-- Actions group (start, end, duration, resume, menu) -->

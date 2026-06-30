@@ -153,7 +153,20 @@ async function resumeEntry(entry: { description: string | null; projectId: strin
     <header class="flex h-[55px] items-center justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-4">
       <div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
         <DInput v-model="description" class="w-full" placeholder="What are you working on?" @blur="saveDescription" />
-        <DSelect v-model="projectId" placeholder="Select a project" :options="projects" class="w-60 shrink-0" />
+        <DSelect v-model="projectId" placeholder="Select a project" :options="projects" class="w-60 shrink-0">
+          <template #trigger="{ option }">
+            <div class="flex items-center gap-2">
+              <div v-if="option?.color" class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.color)" />
+              <span class="truncate">{{ option?.display ?? "Select a project" }}</span>
+            </div>
+          </template>
+          <template #item="{ option }">
+            <div class="flex items-center gap-2">
+              <div v-if="option.color" class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.color)" />
+              <span class="truncate">{{ option.display }}</span>
+            </div>
+          </template>
+        </DSelect>
         <DInput type="time" step="1" v-model="time" class="tabular-nums" />
       </div>
       <div class="flex items-start justify-end gap-2 sm:items-center">

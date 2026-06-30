@@ -59,8 +59,7 @@ const selectedOption = computed(() => options.find((o) => o.value === model.valu
             v-for="option in options"
             :key="String(option.value)"
             :value="option.value as any"
-            class="flex cursor-default items-center justify-between rounded px-2.5 py-1.5 text-sm outline-none focus:outline-0 data-[highlighted]:bg-neutral-100"
-            :class="option.color ? colorItemClass(option.color) : 'text-neutral-900'"
+            class="flex cursor-default items-center justify-between rounded px-2.5 py-1.5 text-sm text-neutral-900 outline-none focus:outline-0 data-[highlighted]:bg-neutral-100"
           >
             <SelectItemText class="overflow-hidden text-nowrap overflow-ellipsis">
               <slot name="item" :option="option">{{ option.display }}</slot>

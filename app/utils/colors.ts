@@ -44,31 +44,6 @@ const dotClasses: Record<ProjectColor, string> = {
   gray: "bg-gray-500"
 }
 
-const itemClasses: Record<ProjectColor, string> = {
-  red: "bg-red-100 text-red-800 data-[highlighted]:bg-red-200",
-  orange: "bg-orange-100 text-orange-800 data-[highlighted]:bg-orange-200",
-  amber: "bg-amber-100 text-amber-800 data-[highlighted]:bg-amber-200",
-  yellow: "bg-yellow-100 text-yellow-800 data-[highlighted]:bg-yellow-200",
-  lime: "bg-lime-100 text-lime-800 data-[highlighted]:bg-lime-200",
-  green: "bg-green-100 text-green-800 data-[highlighted]:bg-green-200",
-  emerald: "bg-emerald-100 text-emerald-800 data-[highlighted]:bg-emerald-200",
-  teal: "bg-teal-100 text-teal-800 data-[highlighted]:bg-teal-200",
-  cyan: "bg-cyan-100 text-cyan-800 data-[highlighted]:bg-cyan-200",
-  sky: "bg-sky-100 text-sky-800 data-[highlighted]:bg-sky-200",
-  blue: "bg-blue-100 text-blue-800 data-[highlighted]:bg-blue-200",
-  indigo: "bg-indigo-100 text-indigo-800 data-[highlighted]:bg-indigo-200",
-  violet: "bg-violet-100 text-violet-800 data-[highlighted]:bg-violet-200",
-  purple: "bg-purple-100 text-purple-800 data-[highlighted]:bg-purple-200",
-  fuchsia: "bg-fuchsia-100 text-fuchsia-800 data-[highlighted]:bg-fuchsia-200",
-  pink: "bg-pink-100 text-pink-800 data-[highlighted]:bg-pink-200",
-  rose: "bg-rose-100 text-rose-800 data-[highlighted]:bg-rose-200",
-  gray: "bg-gray-100 text-gray-800 data-[highlighted]:bg-gray-200"
-}
-
 export function colorDotClass(color: string): string {
   return dotClasses[color as ProjectColor] ?? dotClasses.gray
-}
-
-export function colorItemClass(color: string): string {
-  return itemClasses[color as ProjectColor] ?? itemClasses.gray
 }
