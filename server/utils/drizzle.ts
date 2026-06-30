@@ -5,7 +5,7 @@ export { sql, eq, and, or, gt, lt, gte, lte, isNull, ne, count, inArray, not, as
 
 export const tables = schema
 
-const database = drizzle(process.env.NUXT_DSN!, { relations })
+const database = drizzle(process.env.DATABASE_URL!, { relations })
 
 export function useDrizzle() {
   return database

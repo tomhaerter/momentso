@@ -2,9 +2,9 @@ import { drizzle } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
 import { resolve } from "node:path"
 
-const url = process.env.NUXT_DSN
+const url = process.env.DATABASE_URL
 if (!url) {
-	console.error("NUXT_DSN is required")
+	console.error("DATABASE_URL is required")
 	process.exit(1)
 }
 
