@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "time_entries_active_user_idx" ON "time_entries" ("user_id","workspace_id") WHERE ((("end_time" is null)) and (("deleted_at" is null)));

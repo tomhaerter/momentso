@@ -1,4 +1,5 @@
 import { pgTable, timestamp, text, primaryKey, uuid, pgEnum, uniqueIndex } from "drizzle-orm/pg-core"
+import { and, isNull } from "drizzle-orm"
 import { uuidv7 } from "uuidv7"
 
 // Helpers — column names are explicitly aliased to snake_case to match DB
@@ -93,18 +94,26 @@ export const projects = pgTable("projects", {
   ...timestamps
 })
 
-export const timeEntries = pgTable("time_entries", {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  description: text(),
-  startTime: timestamp("start_time", { withTimezone: true }),
-  endTime: timestamp("end_time", { withTimezone: true }),
-  projectId: uuid("project_id").references(() => projects.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  ...workspaceId,
-  ...timestamps
-})
+export const timeEntries = pgTable(
+  "time_entries",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    description: text(),
+    startTime: timestamp("start_time", { withTimezone: true }),
+    endTime: timestamp("end_time", { withTimezone: true }),
+    projectId: uuid("project_id").references(() => projects.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    ...workspaceId,
+    ...timestamps
+  },
+  (t) => [
+    uniqueIndex("time_entries_active_user_idx")
+      .on(t.userId, t.workspaceId)
+      .where(and(isNull(t.endTime), isNull(t.deletedAt)))
+  ]
+)
 
 export const workspaceInvites = pgTable(
   "workspace_invites",

@@ -21,10 +21,14 @@ export default defineEventHandler(async (event) => {
       const activeTimers = await useDrizzle()
         .select()
         .from(timeEntries)
-        .where(and(eq(timeEntries.workspaceId, secure.workspaceId), isNull(timeEntries.endTime)))
+        .where(and(
+          eq(timeEntries.workspaceId, secure.workspaceId),
+          eq(timeEntries.userId, secure.userId),
+          isNull(timeEntries.endTime)
+        ))
 
       if (activeTimers.length > 0) {
-        throw createError({ statusCode: 400, message: "An active timer already exists" })
+        throw createError({ statusCode: 400, message: "You already have an active timer" })
       }
     }
 
