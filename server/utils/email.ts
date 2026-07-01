@@ -24,6 +24,24 @@ export async function sendEmail(opts: {
   return data
 }
 
+export function passwordResetEmail(opts: {
+  to: string
+  name: string
+  token: string
+  appUrl: string
+}) {
+  const link = `${opts.appUrl}/reset-password?token=${opts.token}`
+  return {
+    subject: "Reset your Momentso password",
+    html:
+      `<p>Hello ${escapeHtml(opts.name)},</p>` +
+      `<p>You received a request to reset your password for Momentso. To reset your password, please click the following link:</p>` +
+      `<p><a href="${link}">Reset password</a></p>` +
+      `<p>If you did not request this email, you can safely ignore it.</p>` +
+      `<p>Thank you<br />The Momentso Team</p>`
+  }
+}
+
 export function workspaceInviteEmail(opts: {
   to: string
   inviterName: string
