@@ -49,8 +49,8 @@ async function login() {
           </div>
           <d-input v-model="password" type="password" id="password" name="password" required placeholder="Your password" />
         </div>
-        <d-button :loading type="submit" variant="primary">Sign In</d-button>
-        <d-button to="/register" type="submit" variant="secondary">Sign Up</d-button>
+        <d-button :loading type="submit" variant="primary" class="w-full">Sign In</d-button>
+        <d-button to="/register" type="submit" variant="secondary" class="w-full">Sign Up</d-button>
         <div v-if="errorMsg" class="mb-2 rounded-md bg-red-100 px-4 py-2 text-center text-sm text-red-600">
           {{ errorMsg }}
         </div>
