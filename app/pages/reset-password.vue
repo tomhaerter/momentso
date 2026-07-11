@@ -50,15 +50,15 @@ async function requestPasswordReset() {
           <DInput v-model="password" type="password" autocomplete="off" id="password" name="password" required placeholder="Your new password" />
         </div>
         <div class="flex flex-col gap-2">
-          <DButton type="submit" text-center>Reset password</DButton>
-          <DButton to="/login" variant="secondary" text-center>Back to login</DButton>
+          <DButton type="submit" class="w-full" text-center>Reset password</DButton>
+          <DButton to="/login" variant="secondary" class="w-full" text-center>Back to login</DButton>
         </div>
       </form>
       <div v-else class="flex flex-col gap-2">
         <div class="rounded-md bg-green-100 p-4">
           <p class="text-sm text-green-900">You have successfully reset your password.</p>
         </div>
-        <DButton to="/login" text-center>Back to login</DButton>
+        <DButton to="/login" class="w-full" text-center>Back to login</DButton>
       </div>
     </div>
   </div>

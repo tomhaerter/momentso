@@ -43,13 +43,13 @@ async function requestPasswordReset() {
           <DInput v-model="email" type="email" autocomplete="off" id="email" name="email" required placeholder="Your email address" />
         </div>
         <div class="flex flex-col gap-2">
-          <DButton type="submit" text-center>Request link</DButton>
-          <DButton to="/login" variant="secondary" text-center>Back to login</DButton>
+          <DButton type="submit" class="w-full" text-center>Request link</DButton>
+          <DButton to="/login" variant="secondary" class="w-full" text-center>Back to login</DButton>
         </div>
       </form>
       <div v-else class="flex flex-col gap-2">
         <p class="text-sm text-neutral-700">If your user exists, you will receive an email with a link to reset your password.</p>
-        <DButton to="/login" text-center>Back to login</DButton>
+        <DButton to="/login" class="w-full" text-center>Back to login</DButton>
       </div>
     </div>
   </div>
