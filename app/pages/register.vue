@@ -62,7 +62,7 @@ async function register() {
           <d-input v-model="password" type="password" id="password" name="password" required placeholder="Your password" />
         </div>
 
-        <d-button :loading="loading" type="submit" class="items-center justify-center bg-black text-white"> Register </d-button>
+        <d-button :loading="loading" type="submit" class="w-full items-center justify-center bg-black text-white"> Register </d-button>
         <div v-if="errorMsg" class="mb-2 rounded-md bg-red-100 px-4 py-2 text-center text-sm text-red-600">
           {{ errorMsg }}
         </div>
