@@ -15,7 +15,7 @@ const footerLinks = [
 <template>
   <div class="flex h-full max-h-screen flex-col sm:flex-row">
     <DPageSidebar :links="links" :footer-links="footerLinks" />
-    <main class="flex-1 overflow-scroll">
+    <main class="flex-1 overflow-auto">
       <slot></slot>
     </main>
   </div>

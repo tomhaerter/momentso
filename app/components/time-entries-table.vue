@@ -227,20 +227,29 @@ const inputClass =
 
         <!-- Actions group (start, end, duration, resume, menu) -->
         <div class="flex shrink-0 items-center gap-1.5">
-          <!-- Start time -->
-          <input
-            v-if="editValues[entry.id]"
-            v-model="editValues[entry.id]!.start"
-            type="time"
-            step="1"
-            :class="inputClass"
-            @blur="saveTime(entry, 'startTime')"
-          />
+          <div class="hidden items-center gap-1.5 lg:flex">
+            <!-- Start time -->
+            <input
+              v-if="editValues[entry.id]"
+              v-model="editValues[entry.id]!.start"
+              type="time"
+              step="1"
+              :class="inputClass"
+              @blur="saveTime(entry, 'startTime')"
+            />
 
-          <span class="text-sm text-neutral-400">-</span>
+            <span class="text-sm text-neutral-400">-</span>
 
-          <!-- End time -->
-          <input v-if="editValues[entry.id]" v-model="editValues[entry.id]!.end" type="time" step="1" :class="inputClass" @blur="saveTime(entry, 'endTime')" />
+            <!-- End time -->
+            <input
+              v-if="editValues[entry.id]"
+              v-model="editValues[entry.id]!.end"
+              type="time"
+              step="1"
+              :class="inputClass"
+              @blur="saveTime(entry, 'endTime')"
+            />
+          </div>
 
           <!-- Duration -->
           <div class="w-28 text-center text-sm text-neutral-700 tabular-nums">

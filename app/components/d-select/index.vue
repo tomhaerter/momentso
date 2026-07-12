@@ -52,7 +52,7 @@ const selectedOption = computed(() => options.find((o) => o.value === model.valu
       <SelectContent
         :side-offset="4"
         position="popper"
-        class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 z-100 max-h-48 w-[var(--reka-select-trigger-width)] overflow-scroll rounded-md border border-neutral-200 bg-white p-1 text-sm shadow"
+        class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 z-100 max-h-48 w-[var(--reka-select-trigger-width)] overflow-x-hidden overflow-y-auto rounded-md border border-neutral-200 bg-white p-1 text-sm shadow"
       >
         <SelectViewport class="flex flex-col gap-1">
           <SelectItem
