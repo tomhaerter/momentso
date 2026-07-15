@@ -3,14 +3,14 @@ import { ChartPieIcon, LogOutIcon, Settings2Icon, Clock10Icon, FolderKanbanIcon,
 
 const links = [
   {
-    name: "Overview",
-    to: "/overview",
-    icon: ChartPieIcon
-  },
-  {
     name: "Time Tracker",
     to: "/",
     icon: Clock10Icon
+  },
+  {
+    name: "Overview",
+    to: "/overview",
+    icon: ChartPieIcon
   },
   {
     name: "Projects",
