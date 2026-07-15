@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import {
-  PenIcon,
-  UsersIcon,
-  GridIcon,
-  BadgeCheckIcon,
-  CalendarDaysIcon,
-  ChartPieIcon,
-  TagsIcon,
-  LogOutIcon,
-  Settings2Icon,
-  UserCheckIcon,
-  Clock10Icon,
-  FolderKanbanIcon,
-  Building2Icon
-} from "lucide-vue-next"
+import { ChartPieIcon, LogOutIcon, Settings2Icon, Clock10Icon, FolderKanbanIcon, Building2Icon } from "lucide-vue-next"
 
 const links = [
+  {
+    name: "Overview",
+    to: "/overview",
+    icon: ChartPieIcon
+  },
   {
     name: "Time Tracker",
     to: "/",
