@@ -57,7 +57,7 @@ async function loadOverview(selectedProjectId: string | null) {
   loadError.value = ""
   pending.value = true
   try {
-    const data = await $fetch<OverviewData>("/api/overview", {
+    const data = await $fetch("/api/overview", {
       query: {
         ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
         start: weekStart,
