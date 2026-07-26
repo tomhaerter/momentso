@@ -9,7 +9,7 @@ interface OverviewPerson {
 }
 
 interface OverviewData {
-  projectId: string
+  projectId: string | null
   start: string
   end: string
   totalSeconds: number
@@ -19,14 +19,15 @@ interface OverviewData {
 const { formatDurationFromSeconds } = useTimeEntryFormatters()
 const { data: projects } = await useFetch("/api/projects")
 
-const projectOptions = computed(() =>
-  (projects.value ?? []).map((project) => ({
+const projectOptions = computed(() => [
+  { value: null, display: "All projects" },
+  ...(projects.value ?? []).map((project) => ({
     value: project.id,
     display: project.name,
     color: project.color
   }))
-)
-const projectId = ref<string | null>(projects.value?.[0]?.id ?? null)
+])
+const projectId = ref<string | null>(null)
 
 const timeZone = Temporal.Now.timeZoneId()
 const today = Temporal.Now.plainDateISO(timeZone)
@@ -54,12 +55,11 @@ async function loadOverview(selectedProjectId: string | null) {
   const request = ++latestRequest
   overview.value = null
   loadError.value = ""
-  pending.value = Boolean(selectedProjectId)
-  if (!selectedProjectId) return
+  pending.value = true
   try {
     const data = await $fetch<OverviewData>("/api/overview", {
       query: {
-        projectId: selectedProjectId,
+        ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
         start: weekStart,
         end: weekEnd
       }
@@ -83,11 +83,11 @@ const peopleWhoTrackedTime = computed(() => overview.value?.people.filter((perso
     <DHeader>
       <DHeaderTitle>Overview</DHeaderTitle>
       <template #right>
-        <DSelect v-if="projectOptions.length" v-model="projectId" :options="projectOptions" placeholder="Select a project" class="w-56">
+        <DSelect v-if="projectOptions.length > 1" v-model="projectId" :options="projectOptions" placeholder="All projects" class="w-56">
           <template #trigger="{ option }">
             <div class="flex items-center gap-2">
               <div v-if="option?.color" class="size-3 shrink-0 rounded-full" :class="colorDotClass(option.color)" />
-              <span class="truncate">{{ option?.display ?? "Select a project" }}</span>
+              <span class="truncate">{{ option?.display ?? "All projects" }}</span>
             </div>
           </template>
           <template #item="{ option }">
@@ -101,12 +101,7 @@ const peopleWhoTrackedTime = computed(() => overview.value?.people.filter((perso
     </DHeader>
 
     <DPageContent>
-      <DPageEmpty v-if="!projectOptions.length">
-        <p>No projects yet.</p>
-        <DButton to="/projects">Create a project</DButton>
-      </DPageEmpty>
-
-      <DPageEmpty v-else-if="loadError">{{ loadError }}</DPageEmpty>
+      <DPageEmpty v-if="loadError">{{ loadError }}</DPageEmpty>
 
       <template v-else>
         <section class="border-b border-neutral-200 px-6 py-6">

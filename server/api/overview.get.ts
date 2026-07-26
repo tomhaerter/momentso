@@ -6,12 +6,12 @@ export default defineEventHandler(async (event) => {
   if (!secure) throw createError({ statusCode: 401, message: "Unauthorized" })
 
   const query = getQuery(event)
-  const projectId = typeof query.projectId === "string" ? query.projectId : ""
+  const projectId = typeof query.projectId === "string" && query.projectId ? query.projectId : null
   const start = typeof query.start === "string" ? new Date(query.start) : new Date(Number.NaN)
   const end = typeof query.end === "string" ? new Date(query.end) : new Date(Number.NaN)
 
-  if (!projectId || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
-    throw createError({ statusCode: 400, message: "A project and valid date range are required" })
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
+    throw createError({ statusCode: 400, message: "A valid date range is required" })
   }
 
   // Keep this reporting endpoint scoped to a reasonably small range.
@@ -19,13 +19,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Date range cannot exceed 31 days" })
   }
 
-  const [project] = await useDrizzle()
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, secure.workspaceId), isNull(projects.deletedAt)))
-    .limit(1)
+  if (projectId) {
+    const [project] = await useDrizzle()
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.workspaceId, secure.workspaceId), isNull(projects.deletedAt)))
+      .limit(1)
 
-  if (!project) throw createError({ statusCode: 404, message: "Project not found" })
+    if (!project) throw createError({ statusCode: 404, message: "Project not found" })
+  }
 
   const [members, entries] = await Promise.all([
     useDrizzle()
@@ -47,7 +49,7 @@ export default defineEventHandler(async (event) => {
       .where(
         and(
           eq(timeEntries.workspaceId, secure.workspaceId),
-          eq(timeEntries.projectId, projectId),
+          projectId ? eq(timeEntries.projectId, projectId) : undefined,
           isNull(timeEntries.deletedAt),
           isNotNull(timeEntries.startTime),
           lt(timeEntries.startTime, end),
