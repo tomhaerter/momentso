@@ -77,28 +77,18 @@ export function useTimeEntryFormatters() {
     return `${String(zdt.hour).padStart(2, "0")}:${String(zdt.minute).padStart(2, "0")}:${String(zdt.second).padStart(2, "0")}`
   }
 
-  // Apply a date (YYYY-MM-DD) to an existing datetime, returning ISO string
-  function applyDateToEntry(
-    entry: { startTime?: string | Date | null; endTime?: string | Date | null },
-    dateValue: string
-  ): { startTime: string | null; endTime: string | null } {
-    const timeZone = Temporal.Now.timeZoneId()
-    const [y, m, d] = dateValue.split("-").map(Number)
-
-    let newStart: string | null = null
-    let newEnd: string | null = null
-
-    if (entry.startTime) {
-      const startZdt = toInstant(entry.startTime).toZonedDateTimeISO(timeZone)
-      // Use with() to replace year/month/day while keeping time components
-      newStart = startZdt.with({ year: y, month: m, day: d }).toInstant().toString()
-    }
-    if (entry.endTime) {
-      const endZdt = toInstant(entry.endTime).toZonedDateTimeISO(timeZone)
-      newEnd = endZdt.with({ year: y, month: m, day: d }).toInstant().toString()
+  function localDateTimeInputToInstant(dateValue: string, timeValue: string): string | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue) || !/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(timeValue)) {
+      return null
     }
 
-    return { startTime: newStart, endTime: newEnd }
+    try {
+      const timeWithSeconds = timeValue.length === 5 ? `${timeValue}:00` : timeValue
+      const dateTime = Temporal.PlainDateTime.from(`${dateValue}T${timeWithSeconds}`)
+      return dateTime.toZonedDateTime(Temporal.Now.timeZoneId()).toInstant().toString()
+    } catch {
+      return null
+    }
   }
 
   return {
@@ -110,6 +100,6 @@ export function useTimeEntryFormatters() {
     formatDateLabel,
     formatDateInputValue,
     toTimeInputValue,
-    applyDateToEntry
+    localDateTimeInputToInstant
   }
 }

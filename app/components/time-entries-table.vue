@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Temporal } from "@js-temporal/polyfill"
 import { TrashIcon, PlayIcon } from "lucide-vue-next"
 
 interface TimeEntry {
@@ -22,7 +21,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{ saved: []; resume: [entry: TimeEntry] }>()
 
-const { formatEntryDuration, getEntryDurationSeconds, getEntryDate, formatDateLabel, formatDateInputValue, toTimeInputValue, applyDateToEntry } =
+const { formatEntryDuration, getEntryDurationSeconds, getEntryDate, formatDateLabel, formatDateInputValue, toTimeInputValue, localDateTimeInputToInstant } =
   useTimeEntryFormatters()
 
 const { data: projectsData } = await useFetch("/api/projects")
@@ -67,7 +66,7 @@ function dayTotal(entries: TimeEntry[]): string {
 }
 
 // Local editable state
-const editValues = ref<Record<string, { start: string; end: string; date: string; description: string }>>({})
+const editValues = ref<Record<string, { start: string; end: string; startDate: string; endDate: string; description: string }>>({})
 
 watchEffect(() => {
   for (const entry of props.entries) {
@@ -75,48 +74,68 @@ watchEffect(() => {
       editValues.value[entry.id] = {
         start: toTimeInputValue(entry.startTime),
         end: toTimeInputValue(entry.endTime),
-        date: formatDateInputValue(entry.startTime),
+        startDate: formatDateInputValue(entry.startTime),
+        endDate: formatDateInputValue(entry.endTime),
         description: entry.description ?? ""
       }
     }
   }
 })
 
-async function saveTime(entry: TimeEntry, field: "startTime" | "endTime") {
+const dateTimeSavePromises = new Map<string, Promise<void>>()
+
+async function saveDateTime(entry: TimeEntry, field: "startTime" | "endTime") {
   const edit = editValues.value[entry.id]
   if (!edit) return
-  const timeValue = field === "startTime" ? edit.start : edit.end
-  if (!timeValue) return
-  const original = entry[field]
-  if (!original) return
-  const instant = typeof original === "string" ? Temporal.Instant.from(original) : Temporal.Instant.fromEpochMilliseconds(original.getTime())
-  const zdt = instant.toZonedDateTimeISO(Temporal.Now.timeZoneId())
-  const [h, m, s] = timeValue.split(":").map(Number)
-  const newZdt = zdt.with({ hour: h, minute: m, second: s })
-  const isoValue = newZdt.toInstant().toString()
-  try {
-    await $fetch(`/api/time-entries/${entry.id}`, { method: "PUT", body: { [field]: isoValue } })
-    entry[field] = isoValue
-    emit("saved")
-  } catch (error) {
-    console.error("Failed to save time:", error)
-  }
-}
 
-async function saveDate(entry: TimeEntry) {
-  const edit = editValues.value[entry.id]
-  if (!edit || !edit.date) return
-  const { startTime, endTime } = applyDateToEntry(entry, edit.date)
+  const isStart = field === "startTime"
+  const timeValue = isStart ? edit.start : edit.end
+  const dateValue = isStart ? edit.startDate : edit.endDate
+  const isoValue = localDateTimeInputToInstant(dateValue, timeValue)
+  const editStillMatches = () => (isStart ? edit.start === timeValue && edit.startDate === dateValue : edit.end === timeValue && edit.endDate === dateValue)
+  const resetEditValue = (value: string | Date | null) => {
+    if (!editStillMatches()) return
+    if (isStart) {
+      edit.start = toTimeInputValue(value)
+      edit.startDate = formatDateInputValue(value)
+    } else {
+      edit.end = toTimeInputValue(value)
+      edit.endDate = formatDateInputValue(value)
+    }
+  }
+
+  const key = `${entry.id}:${field}`
+  const previousSave = dateTimeSavePromises.get(key)
+  const savePromise = (async () => {
+    if (previousSave) await previousSave
+
+    const original = entry[field]
+    if (!isoValue) {
+      resetEditValue(original)
+      return
+    }
+
+    if (original && toTimeInputValue(original) === toTimeInputValue(isoValue) && formatDateInputValue(original) === formatDateInputValue(isoValue)) {
+      resetEditValue(original)
+      return
+    }
+
+    try {
+      await $fetch(`/api/time-entries/${entry.id}`, { method: "PUT", body: { [field]: isoValue } })
+      entry[field] = isoValue
+      resetEditValue(isoValue)
+      emit("saved")
+    } catch (error) {
+      console.error("Failed to save date and time:", error)
+      resetEditValue(original)
+    }
+  })()
+
+  dateTimeSavePromises.set(key, savePromise)
   try {
-    const body: Record<string, string> = {}
-    if (startTime) body.startTime = startTime
-    if (endTime) body.endTime = endTime
-    await $fetch(`/api/time-entries/${entry.id}`, { method: "PUT", body })
-    if (startTime) entry.startTime = startTime
-    if (endTime) entry.endTime = endTime
-    emit("saved")
-  } catch (error) {
-    console.error("Failed to save date:", error)
+    await savePromise
+  } finally {
+    if (dateTimeSavePromises.get(key) === savePromise) dateTimeSavePromises.delete(key)
   }
 }
 
@@ -229,26 +248,38 @@ const inputClass =
         <div class="flex shrink-0 items-center gap-1.5">
           <div class="hidden items-center gap-1.5 lg:flex">
             <!-- Start time -->
-            <input
-              v-if="editValues[entry.id]"
-              v-model="editValues[entry.id]!.start"
-              type="time"
-              step="1"
-              :class="inputClass"
-              @blur="saveTime(entry, 'startTime')"
-            />
+            <div v-if="editValues[entry.id]" class="flex items-center gap-0.5">
+              <input
+                v-model="editValues[entry.id]!.start"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                aria-label="Start time in 24-hour format"
+                placeholder="00:00:00"
+                pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?"
+                :class="inputClass"
+                @blur="saveDateTime(entry, 'startTime')"
+              />
+              <DDatePicker v-model="editValues[entry.id]!.startDate" label="Choose start date" @change="saveDateTime(entry, 'startTime')" />
+            </div>
 
             <span class="text-sm text-neutral-400">-</span>
 
             <!-- End time -->
-            <input
-              v-if="editValues[entry.id]"
-              v-model="editValues[entry.id]!.end"
-              type="time"
-              step="1"
-              :class="inputClass"
-              @blur="saveTime(entry, 'endTime')"
-            />
+            <div v-if="editValues[entry.id]" class="flex items-center gap-0.5">
+              <input
+                v-model="editValues[entry.id]!.end"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                aria-label="End time in 24-hour format"
+                placeholder="00:00:00"
+                pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?"
+                :class="inputClass"
+                @blur="saveDateTime(entry, 'endTime')"
+              />
+              <DDatePicker v-model="editValues[entry.id]!.endDate" label="Choose end date" @change="saveDateTime(entry, 'endTime')" />
+            </div>
           </div>
 
           <!-- Duration -->
