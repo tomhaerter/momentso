@@ -22,10 +22,7 @@ export default defineEventHandler(async (event) => {
   await useDrizzle()
     .update(workspaceInvites)
     .set({ deletedAt: new Date() })
-    .where(and(
-      eq(workspaceInvites.id, id),
-      eq(workspaceInvites.workspaceId, secure.workspaceId)
-    ))
+    .where(and(eq(workspaceInvites.id, id), eq(workspaceInvites.workspaceId, secure.workspaceId)))
 
   return { success: true }
 })

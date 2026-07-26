@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { ChevronsUpDownIcon, CheckIcon, PlusIcon } from "lucide-vue-next"
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
-} from "reka-ui"
+import { DropdownMenuRoot, DropdownMenuTrigger, DropdownMenuPortal, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "reka-ui"
 
 const { user } = useUserSession()
 
@@ -74,11 +67,7 @@ function closeModal() {
         <ChevronsUpDownIcon class="size-3.5 shrink-0 text-neutral-400" />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent
-          :side-offset="4"
-          align="start"
-          class="z-100 min-w-[200px] rounded-md border border-neutral-200 bg-white p-1 text-sm shadow"
-        >
+        <DropdownMenuContent :side-offset="4" align="start" class="z-100 min-w-[200px] rounded-md border border-neutral-200 bg-white p-1 text-sm shadow">
           <DropdownMenuItem
             v-for="ws in workspaces"
             :key="ws.id"

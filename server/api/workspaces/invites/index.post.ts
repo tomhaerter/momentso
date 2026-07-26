@@ -31,11 +31,7 @@ export default defineEventHandler(async (event) => {
     .select({ id: users.id })
     .from(users)
     .innerJoin(accounts, eq(users.accountId, accounts.id))
-    .where(and(
-      eq(users.workspaceId, secure.workspaceId),
-      eq(accounts.email, email),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.workspaceId, secure.workspaceId), eq(accounts.email, email), isNull(users.deletedAt)))
     .limit(1)
 
   if (existingMember) {
@@ -46,12 +42,14 @@ export default defineEventHandler(async (event) => {
   const [existingInvite] = await useDrizzle()
     .select({ id: workspaceInvites.id })
     .from(workspaceInvites)
-    .where(and(
-      eq(workspaceInvites.workspaceId, secure.workspaceId),
-      eq(workspaceInvites.email, email),
-      isNull(workspaceInvites.acceptedBy),
-      isNull(workspaceInvites.deletedAt)
-    ))
+    .where(
+      and(
+        eq(workspaceInvites.workspaceId, secure.workspaceId),
+        eq(workspaceInvites.email, email),
+        isNull(workspaceInvites.acceptedBy),
+        isNull(workspaceInvites.deletedAt)
+      )
+    )
     .limit(1)
 
   if (existingInvite) {
@@ -76,11 +74,7 @@ export default defineEventHandler(async (event) => {
   if (!invite) throw createError({ statusCode: 500, message: "Failed to create invite" })
 
   // Fetch workspace name for email
-  const [workspace] = await useDrizzle()
-    .select({ name: workspaces.name })
-    .from(workspaces)
-    .where(eq(workspaces.id, secure.workspaceId))
-    .limit(1)
+  const [workspace] = await useDrizzle().select({ name: workspaces.name }).from(workspaces).where(eq(workspaces.id, secure.workspaceId)).limit(1)
 
   // Send invite email
   const mail = workspaceInviteEmail({

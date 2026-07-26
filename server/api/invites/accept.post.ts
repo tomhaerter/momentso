@@ -29,25 +29,20 @@ export default defineEventHandler(async (event) => {
   if (!sessionUser) throw createError({ statusCode: 401, message: "Unauthorized" })
 
   // Fetch the account to verify email matches
-  const [account] = await useDrizzle()
-    .select({ email: accounts.email })
-    .from(accounts)
-    .where(eq(accounts.id, sessionUser.id))
-    .limit(1)
+  const [account] = await useDrizzle().select({ email: accounts.email }).from(accounts).where(eq(accounts.id, sessionUser.id)).limit(1)
 
   if (!account?.email || account.email.toLowerCase() !== invite.email.toLowerCase()) {
-    throw createError({ statusCode: 403, message: `This invite was sent to ${invite.email} but you're logged in as ${account?.email}. Log out and sign in with the correct email.` })
+    throw createError({
+      statusCode: 403,
+      message: `This invite was sent to ${invite.email} but you're logged in as ${account?.email}. Log out and sign in with the correct email.`
+    })
   }
 
   // Check if already a member
   const [existing] = await useDrizzle()
     .select({ id: users.id })
     .from(users)
-    .where(and(
-      eq(users.accountId, sessionUser.id),
-      eq(users.workspaceId, invite.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.accountId, sessionUser.id), eq(users.workspaceId, invite.workspaceId), isNull(users.deletedAt)))
     .limit(1)
 
   if (existing) {
@@ -67,23 +62,13 @@ export default defineEventHandler(async (event) => {
   if (!newUserRow) throw createError({ statusCode: 500, message: "Failed to create membership" })
 
   // Mark invite as accepted
-  await useDrizzle()
-    .update(workspaceInvites)
-    .set({ acceptedBy: sessionUser.id, acceptedAt: new Date() })
-    .where(eq(workspaceInvites.id, invite.id))
+  await useDrizzle().update(workspaceInvites).set({ acceptedBy: sessionUser.id, acceptedAt: new Date() }).where(eq(workspaceInvites.id, invite.id))
 
   // Fetch workspace name
-  const [workspace] = await useDrizzle()
-    .select({ name: workspaces.name })
-    .from(workspaces)
-    .where(eq(workspaces.id, invite.workspaceId))
-    .limit(1)
+  const [workspace] = await useDrizzle().select({ name: workspaces.name }).from(workspaces).where(eq(workspaces.id, invite.workspaceId)).limit(1)
 
   // Switch session to the new workspace (same pattern as switch.post.ts)
-  await useDrizzle()
-    .update(sessions)
-    .set({ deletedAt: new Date() })
-    .where(eq(sessions.token, secure.token))
+  await useDrizzle().update(sessions).set({ deletedAt: new Date() }).where(eq(sessions.token, secure.token))
 
   const [newSession] = await useDrizzle()
     .insert(sessions)

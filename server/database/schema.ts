@@ -54,10 +54,7 @@ export const users = pgTable(
     role: workspaceUserRoleEnum("role").notNull().default("member"),
     ...timestamps
   },
-  (t) => [
-    primaryKey({ columns: [t.accountId, t.workspaceId] }),
-    uniqueIndex("users_id_idx").on(t.id)
-  ]
+  (t) => [primaryKey({ columns: [t.accountId, t.workspaceId] }), uniqueIndex("users_id_idx").on(t.id)]
 )
 
 export const sessions = pgTable(

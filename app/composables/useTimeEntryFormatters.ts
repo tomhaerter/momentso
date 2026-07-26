@@ -78,7 +78,10 @@ export function useTimeEntryFormatters() {
   }
 
   // Apply a date (YYYY-MM-DD) to an existing datetime, returning ISO string
-  function applyDateToEntry(entry: { startTime?: string | Date | null; endTime?: string | Date | null }, dateValue: string): { startTime: string | null; endTime: string | null } {
+  function applyDateToEntry(
+    entry: { startTime?: string | Date | null; endTime?: string | Date | null },
+    dateValue: string
+  ): { startTime: string | null; endTime: string | null } {
     const timeZone = Temporal.Now.timeZoneId()
     const [y, m, d] = dateValue.split("-").map(Number)
 

@@ -46,9 +46,7 @@ async function save() {
           <DInput v-model="email" type="email" placeholder="you@example.com" class="w-full" />
         </div>
         <div v-if="error" class="text-sm text-red-600">{{ error }}</div>
-        <DButton variant="primary" :icon-left="saving ? LoaderCircleIcon : undefined" :loading="saving" @click="save">
-          Save changes
-        </DButton>
+        <DButton variant="primary" :icon-left="saving ? LoaderCircleIcon : undefined" :loading="saving" @click="save"> Save changes </DButton>
       </div>
     </DPageContent>
   </DPage>

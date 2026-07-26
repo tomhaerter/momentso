@@ -26,19 +26,12 @@ export default defineEventHandler(async (event) => {
   if (!membership) throw createError({ statusCode: 403, message: "No access to this workspace" })
 
   // Fetch the workspace
-  const [workspace] = await useDrizzle()
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
-    .limit(1)
+  const [workspace] = await useDrizzle().select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)
 
   if (!workspace) throw createError({ statusCode: 404, message: "Workspace not found" })
 
   // Soft-delete the old session
-  await useDrizzle()
-    .update(sessions)
-    .set({ deletedAt: new Date() })
-    .where(eq(sessions.token, secure.token))
+  await useDrizzle().update(sessions).set({ deletedAt: new Date() }).where(eq(sessions.token, secure.token))
 
   // Create a new session bound to the target workspace
   const [session] = await useDrizzle()

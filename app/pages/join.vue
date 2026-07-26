@@ -7,7 +7,11 @@ const route = useRoute()
 const token = computed(() => (route.query.token as string) || "")
 const { loggedIn, user, fetch: refreshSession } = useUserSession()
 
-const { data: invite, pending, error } = await useFetch("/api/invites/validate", {
+const {
+  data: invite,
+  pending,
+  error
+} = await useFetch("/api/invites/validate", {
   query: { token },
   immediate: !!token.value
 })
@@ -80,7 +84,8 @@ const canAccept = computed(() => {
             This invite was sent to <strong>{{ invite.email }}</strong>
           </div>
           <div class="text-sm text-neutral-500">
-            You're logged in as <strong>{{ user?.email }}</strong>. Log out and sign in with the correct email to accept.
+            You're logged in as <strong>{{ user?.email }}</strong
+            >. Log out and sign in with the correct email to accept.
           </div>
           <DButton to="/logout" variant="secondary" class="w-full">Log out</DButton>
         </div>
@@ -96,10 +101,10 @@ const canAccept = computed(() => {
 
         <!-- Logged in with matching email -->
         <div v-else class="space-y-3">
-          <div class="rounded-md bg-green-50 p-4 text-center text-sm text-green-700">
-            Logged in as {{ user?.email }}
-          </div>
-          <DButton variant="primary" :loading="accepting" :icon-left="accepting ? LoaderCircleIcon : undefined" class="w-full" @click="accept">Accept invite</DButton>
+          <div class="rounded-md bg-green-50 p-4 text-center text-sm text-green-700">Logged in as {{ user?.email }}</div>
+          <DButton variant="primary" :loading="accepting" :icon-left="accepting ? LoaderCircleIcon : undefined" class="w-full" @click="accept"
+            >Accept invite</DButton
+          >
           <div v-if="acceptError" class="text-center text-sm text-red-600">{{ acceptError }}</div>
         </div>
       </div>

@@ -10,11 +10,7 @@ export default defineEventHandler(async (event) => {
   const projectId = typeof query.projectId === "string" ? query.projectId : undefined
   const clientId = typeof query.clientId === "string" ? query.clientId : undefined
 
-  const conditions = [
-    eq(timeEntries.workspaceId, secure.workspaceId),
-    eq(timeEntries.userId, secure.userId),
-    isNull(timeEntries.deletedAt)
-  ]
+  const conditions = [eq(timeEntries.workspaceId, secure.workspaceId), eq(timeEntries.userId, secure.userId), isNull(timeEntries.deletedAt)]
 
   if (active) {
     conditions.push(isNull(timeEntries.endTime))
@@ -31,7 +27,12 @@ export default defineEventHandler(async (event) => {
       .from(projects)
       .where(and(eq(projects.clientId, clientId), eq(projects.workspaceId, secure.workspaceId)))
 
-    conditions.push(inArray(timeEntries.projectId, projectIds.map((p) => p.id)))
+    conditions.push(
+      inArray(
+        timeEntries.projectId,
+        projectIds.map((p) => p.id)
+      )
+    )
   }
 
   const timeEntryList = await useDrizzle()

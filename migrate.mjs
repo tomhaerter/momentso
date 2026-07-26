@@ -4,8 +4,8 @@ import { resolve } from "node:path"
 
 const url = process.env.DATABASE_URL
 if (!url) {
-	console.error("DATABASE_URL is required")
-	process.exit(1)
+  console.error("DATABASE_URL is required")
+  process.exit(1)
 }
 
 const folder = resolve(process.env.MIGRATIONS_FOLDER ?? "./server/database/migrations")

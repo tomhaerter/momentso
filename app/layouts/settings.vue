@@ -7,9 +7,7 @@ const links = [
   { name: "Members", to: "/settings/members", icon: UsersIcon }
 ]
 
-const footerLinks = [
-  { name: "Back", to: "/", icon: ArrowLeftIcon }
-]
+const footerLinks = [{ name: "Back", to: "/", icon: ArrowLeftIcon }]
 </script>
 
 <template>

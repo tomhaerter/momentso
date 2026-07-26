@@ -2,25 +2,16 @@
   "version": "8",
   "dialect": "postgres",
   "id": "d564dcf4-3730-4c2d-9058-b64d0f073c8b",
-  "prevIds": [
-    "820f17e3-5bd2-4a5d-a350-9e303064c03b"
-  ],
+  "prevIds": ["820f17e3-5bd2-4a5d-a350-9e303064c03b"],
   "ddl": [
     {
-      "values": [
-        "trialing",
-        "active",
-        "canceled"
-      ],
+      "values": ["trialing", "active", "canceled"],
       "name": "subscription_status",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "owner",
-        "member"
-      ],
+      "values": ["owner", "member"],
       "name": "workspace_user_role",
       "entityType": "enums",
       "schema": "public"
@@ -1016,14 +1007,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "clients_workspace_id_workspaces_id_fkey",
@@ -1033,14 +1020,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "client_id"
-      ],
+      "columns": ["client_id"],
       "schemaTo": "public",
       "tableTo": "clients",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "projects_client_id_clients_id_fkey",
@@ -1050,14 +1033,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "projects_workspace_id_workspaces_id_fkey",
@@ -1067,14 +1046,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "accounts",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "sessions_account_id_accounts_id_fkey",
@@ -1084,14 +1059,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "sessions_user_id_users_id_fkey",
@@ -1101,14 +1072,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "sessions_workspace_id_workspaces_id_fkey",
@@ -1118,14 +1085,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "project_id"
-      ],
+      "columns": ["project_id"],
       "schemaTo": "public",
       "tableTo": "projects",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "time_entries_project_id_projects_id_fkey",
@@ -1135,14 +1098,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "time_entries_user_id_users_id_fkey",
@@ -1152,14 +1111,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "time_entries_workspace_id_workspaces_id_fkey",
@@ -1169,14 +1124,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "accounts",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "users_account_id_accounts_id_fkey",
@@ -1186,14 +1137,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "users_workspace_id_workspaces_id_fkey",
@@ -1203,14 +1150,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "schemaTo": "public",
       "tableTo": "workspaces",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "workspace_invites_workspace_id_workspaces_id_fkey",
@@ -1220,14 +1163,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by"
-      ],
+      "columns": ["created_by"],
       "schemaTo": "public",
       "tableTo": "accounts",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "workspace_invites_created_by_accounts_id_fkey",
@@ -1237,14 +1176,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "accepted_by"
-      ],
+      "columns": ["accepted_by"],
       "schemaTo": "public",
       "tableTo": "accounts",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "workspace_invites_accepted_by_accounts_id_fkey",
@@ -1253,10 +1188,7 @@
       "table": "workspace_invites"
     },
     {
-      "columns": [
-        "token",
-        "account_id"
-      ],
+      "columns": ["token", "account_id"],
       "nameExplicit": false,
       "name": "sessions_pkey",
       "entityType": "pks",
@@ -1264,10 +1196,7 @@
       "table": "sessions"
     },
     {
-      "columns": [
-        "account_id",
-        "workspace_id"
-      ],
+      "columns": ["account_id", "workspace_id"],
       "nameExplicit": false,
       "name": "users_pkey",
       "entityType": "pks",
@@ -1275,9 +1204,7 @@
       "table": "users"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "accounts_pkey",
       "schema": "public",
@@ -1285,9 +1212,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "clients_pkey",
       "schema": "public",
@@ -1295,9 +1220,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "projects_pkey",
       "schema": "public",
@@ -1305,9 +1228,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "time_entries_pkey",
       "schema": "public",
@@ -1315,9 +1236,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "workspace_invites_pkey",
       "schema": "public",
@@ -1325,9 +1244,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "workspaces_pkey",
       "schema": "public",
@@ -1336,9 +1253,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "accounts_email_key",
       "schema": "public",
@@ -1347,9 +1262,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "sessions_token_key",
       "schema": "public",
@@ -1358,9 +1271,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "workspace_invites_token_key",
       "schema": "public",
@@ -1369,9 +1280,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "stripe_customer_id"
-      ],
+      "columns": ["stripe_customer_id"],
       "nullsNotDistinct": false,
       "name": "workspaces_stripe_customer_id_key",
       "schema": "public",
@@ -1380,9 +1289,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "stripe_subscription_id"
-      ],
+      "columns": ["stripe_subscription_id"],
       "nullsNotDistinct": false,
       "name": "workspaces_stripe_subscription_id_key",
       "schema": "public",

@@ -5,8 +5,5 @@ export default defineEventHandler(async (event) => {
   const { secure } = await requireUserSession(event)
   if (!secure) throw createError({ statusCode: 401, message: "Unauthorized" })
 
-  return await useDrizzle()
-    .select()
-    .from(clients)
-    .where(eq(clients.workspaceId, secure.workspaceId))
+  return await useDrizzle().select().from(clients).where(eq(clients.workspaceId, secure.workspaceId))
 })

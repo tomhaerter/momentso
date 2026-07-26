@@ -31,11 +31,7 @@ export default defineEventHandler(async (event) => {
     const [ownerCount] = await useDrizzle()
       .select({ count: count() })
       .from(users)
-      .where(and(
-        eq(users.workspaceId, secure.workspaceId),
-        eq(users.role, "owner"),
-        isNull(users.deletedAt)
-      ))
+      .where(and(eq(users.workspaceId, secure.workspaceId), eq(users.role, "owner"), isNull(users.deletedAt)))
 
     if (Number(ownerCount?.count) <= 1) {
       throw createError({ statusCode: 400, message: "You can't demote yourself — transfer ownership first" })
@@ -45,11 +41,7 @@ export default defineEventHandler(async (event) => {
   const [updated] = await useDrizzle()
     .update(users)
     .set({ role: body.role })
-    .where(and(
-      eq(users.id, targetUserId),
-      eq(users.workspaceId, secure.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.id, targetUserId), eq(users.workspaceId, secure.workspaceId), isNull(users.deletedAt)))
     .returning()
 
   if (!updated) throw createError({ statusCode: 404, message: "Member not found" })
