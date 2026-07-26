@@ -31,7 +31,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: {
-        lang: "en-GB"
+        lang: "en"
       },
       title: "Momentso"
     }
