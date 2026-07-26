@@ -11,10 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  const [workspace] = await useDrizzle()
-    .insert(workspaces)
-    .values({ name: body.name })
-    .returning()
+  const [workspace] = await useDrizzle().insert(workspaces).values({ name: body.name }).returning()
 
   if (!workspace) throw createError({ statusCode: 500, message: "Failed to create workspace" })
 

@@ -46,19 +46,9 @@ async function save() {
           <DLabel>Name</DLabel>
           <DInput v-model="name" :disabled="!isOwner" placeholder="Workspace name" class="w-full" />
         </div>
-        <div v-if="!isOwner" class="text-sm text-neutral-500">
-          Only workspace owners can rename the workspace.
-        </div>
+        <div v-if="!isOwner" class="text-sm text-neutral-500">Only workspace owners can rename the workspace.</div>
         <div v-if="error" class="text-sm text-red-600">{{ error }}</div>
-        <DButton
-          v-if="isOwner"
-          variant="primary"
-          :icon-left="saving ? LoaderCircleIcon : undefined"
-          :loading="saving"
-          @click="save"
-        >
-          Save changes
-        </DButton>
+        <DButton v-if="isOwner" variant="primary" :icon-left="saving ? LoaderCircleIcon : undefined" :loading="saving" @click="save"> Save changes </DButton>
       </div>
     </DPageContent>
   </DPage>

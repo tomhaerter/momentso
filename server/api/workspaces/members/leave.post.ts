@@ -9,22 +9,14 @@ export default defineEventHandler(async (event) => {
   const [myMembership] = await useDrizzle()
     .select({ role: users.role })
     .from(users)
-    .where(and(
-      eq(users.accountId, user.id),
-      eq(users.workspaceId, secure.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.accountId, user.id), eq(users.workspaceId, secure.workspaceId), isNull(users.deletedAt)))
     .limit(1)
 
   if (myMembership?.role === "owner") {
     const [ownerCount] = await useDrizzle()
       .select({ count: count() })
       .from(users)
-      .where(and(
-        eq(users.workspaceId, secure.workspaceId),
-        eq(users.role, "owner"),
-        isNull(users.deletedAt)
-      ))
+      .where(and(eq(users.workspaceId, secure.workspaceId), eq(users.role, "owner"), isNull(users.deletedAt)))
 
     if (Number(ownerCount?.count) <= 1) {
       throw createError({ statusCode: 400, message: "You can't leave — transfer ownership first" })
@@ -35,21 +27,13 @@ export default defineEventHandler(async (event) => {
   await useDrizzle()
     .update(users)
     .set({ deletedAt: new Date() })
-    .where(and(
-      eq(users.accountId, user.id),
-      eq(users.workspaceId, secure.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.accountId, user.id), eq(users.workspaceId, secure.workspaceId), isNull(users.deletedAt)))
 
   // Find another workspace to switch to
   const [otherMembership] = await useDrizzle()
     .select({ workspaceId: users.workspaceId })
     .from(users)
-    .where(and(
-      eq(users.accountId, user.id),
-      ne(users.workspaceId, secure.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.accountId, user.id), ne(users.workspaceId, secure.workspaceId), isNull(users.deletedAt)))
     .limit(1)
 
   if (otherMembership) {

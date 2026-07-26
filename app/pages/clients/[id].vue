@@ -5,7 +5,10 @@ const route = useRoute()
 const id = computed(() => route.params.id as string)
 
 const { data: client } = await useFetch(() => `/api/clients/${id.value}`, { key: `client-${id.value}` })
-const { data: entries, refresh: refreshEntries } = await useFetch(() => "/api/time-entries", { query: { clientId: id.value }, key: `client-entries-${id.value}` })
+const { data: entries, refresh: refreshEntries } = await useFetch(() => "/api/time-entries", {
+  query: { clientId: id.value },
+  key: `client-entries-${id.value}`
+})
 
 const tableEntries = computed(() => entries.value ?? [])
 </script>

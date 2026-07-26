@@ -28,11 +28,7 @@ export default defineEventHandler(async (event) => {
   const [targetMembership] = await useDrizzle()
     .select({ role: users.role, accountId: users.accountId })
     .from(users)
-    .where(and(
-      eq(users.id, targetUserId),
-      eq(users.workspaceId, secure.workspaceId),
-      isNull(users.deletedAt)
-    ))
+    .where(and(eq(users.id, targetUserId), eq(users.workspaceId, secure.workspaceId), isNull(users.deletedAt)))
     .limit(1)
 
   if (!targetMembership) throw createError({ statusCode: 404, message: "Member not found" })
@@ -42,11 +38,7 @@ export default defineEventHandler(async (event) => {
     const [ownerCount] = await useDrizzle()
       .select({ count: count() })
       .from(users)
-      .where(and(
-        eq(users.workspaceId, secure.workspaceId),
-        eq(users.role, "owner"),
-        isNull(users.deletedAt)
-      ))
+      .where(and(eq(users.workspaceId, secure.workspaceId), eq(users.role, "owner"), isNull(users.deletedAt)))
 
     if (Number(ownerCount?.count) <= 1) {
       throw createError({ statusCode: 400, message: "Can't remove the last owner — transfer ownership first" })
@@ -57,20 +49,13 @@ export default defineEventHandler(async (event) => {
   await useDrizzle()
     .update(users)
     .set({ deletedAt: new Date() })
-    .where(and(
-      eq(users.id, targetUserId),
-      eq(users.workspaceId, secure.workspaceId)
-    ))
+    .where(and(eq(users.id, targetUserId), eq(users.workspaceId, secure.workspaceId)))
 
   // Soft-delete any active sessions the removed user has on this workspace
   await useDrizzle()
     .update(sessions)
     .set({ deletedAt: new Date() })
-    .where(and(
-      eq(sessions.accountId, targetMembership.accountId),
-      eq(sessions.workspaceId, secure.workspaceId),
-      isNull(sessions.deletedAt)
-    ))
+    .where(and(eq(sessions.accountId, targetMembership.accountId), eq(sessions.workspaceId, secure.workspaceId), isNull(sessions.deletedAt)))
 
   return { success: true }
 })

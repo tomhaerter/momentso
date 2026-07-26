@@ -1,10 +1,6 @@
 import { Resend } from "resend"
 
-export async function sendEmail(opts: {
-  to: string
-  subject: string
-  html: string
-}) {
+export async function sendEmail(opts: { to: string; subject: string; html: string }) {
   const config = useRuntimeConfig()
   if (!config.resendApiKey) {
     console.warn("[email] RESEND_API_KEY not set — skipping email send")
@@ -24,12 +20,7 @@ export async function sendEmail(opts: {
   return data
 }
 
-export function passwordResetEmail(opts: {
-  to: string
-  name: string
-  token: string
-  appUrl: string
-}) {
+export function passwordResetEmail(opts: { to: string; name: string; token: string; appUrl: string }) {
   const link = `${opts.appUrl}/reset-password?token=${opts.token}`
   return {
     subject: "Reset your Momentso password",
@@ -42,13 +33,7 @@ export function passwordResetEmail(opts: {
   }
 }
 
-export function workspaceInviteEmail(opts: {
-  to: string
-  inviterName: string
-  workspaceName: string
-  token: string
-  appUrl: string
-}) {
+export function workspaceInviteEmail(opts: { to: string; inviterName: string; workspaceName: string; token: string; appUrl: string }) {
   const link = `${opts.appUrl}/join?token=${opts.token}`
   return {
     subject: `${opts.inviterName} invited you to "${opts.workspaceName}" on Momentso`,
@@ -57,10 +42,5 @@ export function workspaceInviteEmail(opts: {
 }
 
 function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
 }

@@ -28,10 +28,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(workspaceInvites)
     .leftJoin(accounts, eq(workspaceInvites.acceptedBy, accounts.id))
-    .where(and(
-      eq(workspaceInvites.workspaceId, secure.workspaceId),
-      isNull(workspaceInvites.deletedAt)
-    ))
+    .where(and(eq(workspaceInvites.workspaceId, secure.workspaceId), isNull(workspaceInvites.deletedAt)))
     .orderBy(asc(workspaceInvites.createdAt))
 
   return rows

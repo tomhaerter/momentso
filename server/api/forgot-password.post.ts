@@ -63,10 +63,7 @@ export async function forgotPasswordProcess(email: string) {
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
 
   // Persist the reset token and expiration date
-  await useDrizzle()
-    .update(accounts)
-    .set({ resetPasswordToken: passwordResetToken, resetPasswordExpiresAt: expiresAt })
-    .where(eq(accounts.id, account.id))
+  await useDrizzle().update(accounts).set({ resetPasswordToken: passwordResetToken, resetPasswordExpiresAt: expiresAt }).where(eq(accounts.id, account.id))
 
   try {
     const mail = passwordResetEmail({

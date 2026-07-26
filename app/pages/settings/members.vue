@@ -40,16 +40,12 @@ function closeInviteModal() {
   inviteError.value = null
 }
 
-const memberMenuItems = (m: { id: string, accountId: string, role: string }) => {
+const memberMenuItems = (m: { id: string; accountId: string; role: string }) => {
   if (m.accountId === user.value?.id) return []
-  return [
-    { label: m.role === "owner" ? "Change to member" : "Change to owner" },
-    { separator: true },
-    { label: "Remove", danger: true }
-  ]
+  return [{ label: m.role === "owner" ? "Change to member" : "Change to owner" }, { separator: true }, { label: "Remove", danger: true }]
 }
 
-async function onMemberSelect(m: { id: string, accountId: string, role: string }, index: number) {
+async function onMemberSelect(m: { id: string; accountId: string; role: string }, index: number) {
   const items = memberMenuItems(m)
   const item = items[index]
   if (!item) return
@@ -107,11 +103,7 @@ async function leaveWorkspace() {
           <div class="text-sm text-neutral-600">{{ m.email }}</div>
           <div class="text-sm text-neutral-600 capitalize">{{ m.role }}</div>
           <div>
-            <DMenu
-              v-if="isOwner && m.accountId !== user?.id"
-              :items="memberMenuItems(m)"
-              @select="(i) => onMemberSelect(m, i)"
-            />
+            <DMenu v-if="isOwner && m.accountId !== user?.id" :items="memberMenuItems(m)" @select="(i) => onMemberSelect(m, i)" />
           </div>
         </div>
       </DTable>
@@ -120,11 +112,7 @@ async function leaveWorkspace() {
       <div v-if="isOwner && invites?.length" class="mt-8 px-4">
         <div class="mb-2 text-sm font-medium text-neutral-900">Pending invites</div>
         <div class="space-y-1">
-          <div
-            v-for="inv in invites"
-            :key="inv.id"
-            class="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-3 py-2"
-          >
+          <div v-for="inv in invites" :key="inv.id" class="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-3 py-2">
             <div>
               <div class="text-sm font-medium text-neutral-900">{{ inv.email }}</div>
               <div class="text-xs text-neutral-500">Expires {{ new Date(inv.expiresAt).toLocaleDateString() }}</div>
@@ -140,23 +128,11 @@ async function leaveWorkspace() {
       </div>
     </DPageContent>
 
-    <DModal
-      v-if="showInviteModal"
-      titel="Invite member"
-      confirm-text="Send invite"
-      @close="closeInviteModal"
-      @confirm="sendInvite"
-    >
+    <DModal v-if="showInviteModal" titel="Invite member" confirm-text="Send invite" @close="closeInviteModal" @confirm="sendInvite">
       <div class="space-y-4 p-4">
         <div>
           <DLabel>Email</DLabel>
-          <DInput
-            v-model="inviteEmail"
-            type="email"
-            placeholder="they@example.com"
-            class="w-full"
-            @keypress.enter="sendInvite"
-          />
+          <DInput v-model="inviteEmail" type="email" placeholder="they@example.com" class="w-full" @keypress.enter="sendInvite" />
         </div>
         <div v-if="inviteError" class="text-sm text-red-600">{{ inviteError }}</div>
       </div>

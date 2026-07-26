@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { MoreVerticalIcon } from "lucide-vue-next"
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
-} from "reka-ui"
+import { DropdownMenuRoot, DropdownMenuTrigger, DropdownMenuPortal, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "reka-ui"
 
 defineProps<{
   items?: { label?: string; icon?: any; separator?: boolean; danger?: boolean }[]

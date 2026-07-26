@@ -17,11 +17,7 @@ export default defineEventHandler(async (event) => {
   let email: string | undefined
   if (body.email !== undefined) {
     email = body.email.toLowerCase()
-    const [existing] = await useDrizzle()
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(eq(accounts.email, email))
-      .limit(1)
+    const [existing] = await useDrizzle().select({ id: accounts.id }).from(accounts).where(eq(accounts.email, email)).limit(1)
     if (existing && existing.id !== user.id) {
       throw createError({ statusCode: 400, message: "Email already in use" })
     }
