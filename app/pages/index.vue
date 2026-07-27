@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Temporal } from "@js-temporal/polyfill"
+import { CalendarDaysIcon } from "lucide-vue-next"
 
 const description = ref("")
 
@@ -24,6 +25,55 @@ const { data: activeTimers } = await useFetch("/api/time-entries", {
   query: { active: "true" }
 })
 
+// Active timer editing (started_at time + date)
+const { toTimeInputValue, formatDateInputValue } = useTimeEntryFormatters()
+const activeStartTime = ref("")
+const activeStartDate = ref("")
+const dateInputRef = ref<HTMLInputElement | null>(null)
+
+function openDatePicker() {
+  const el = dateInputRef.value
+  if (!el) return
+  if (typeof el.showPicker === "function") {
+    try {
+      el.showPicker()
+    } catch {
+      el.focus()
+    }
+  } else {
+    el.focus()
+  }
+}
+
+async function saveActiveStartTime() {
+  if (!activeTimeEntryId.value || !startTime.value || !activeStartTime.value) return
+  const [h, m, s] = activeStartTime.value.split(":").map(Number)
+  const base = startTime.value.toZonedDateTimeISO(Temporal.Now.timeZoneId())
+  const newStart = base.with({ hour: h, minute: m, second: s ?? 0 }).toInstant()
+  await updateActiveStart(newStart)
+}
+
+async function saveActiveStartDate() {
+  if (!activeTimeEntryId.value || !startTime.value || !activeStartDate.value) return
+  const [y, mo, d] = activeStartDate.value.split("-").map(Number)
+  const base = startTime.value.toZonedDateTimeISO(Temporal.Now.timeZoneId())
+  const newStart = base.with({ year: y, month: mo, day: d }).toInstant()
+  await updateActiveStart(newStart)
+}
+
+async function updateActiveStart(newStart: Temporal.Instant) {
+  try {
+    await $fetch(`/api/time-entries/${activeTimeEntryId.value}`, {
+      method: "PUT",
+      body: { startTime: newStart.toString() }
+    })
+    startTime.value = newStart
+    updateTime()
+  } catch (error) {
+    console.error("Failed to update start time:", error)
+  }
+}
+
 const { data: allEntries, refresh: refreshAllEntries } = await useFetch("/api/time-entries")
 
 // Filter out active entries to get past entries
@@ -41,6 +91,8 @@ if (activeTimers.value && activeTimers.value.length > 0) {
 
     if (activeTimer.startTime) {
       startTime.value = Temporal.Instant.from(activeTimer.startTime)
+      activeStartTime.value = toTimeInputValue(activeTimer.startTime)
+      activeStartDate.value = formatDateInputValue(activeTimer.startTime)
     }
   }
 }
@@ -48,6 +100,9 @@ if (activeTimers.value && activeTimers.value.length > 0) {
 watch(counter, () => {
   updateTime()
 })
+
+// Initialize immediately so a hydrated long-running timer shows its elapsed time
+updateTime()
 
 onMounted(() => {
   nextTick(() => {
@@ -60,9 +115,10 @@ function updateTime() {
     const now = endTime.value || Temporal.Now.instant()
     const duration = now.since(startTime.value)
 
-    const hours = Math.floor(duration.total("hours"))
-    const minutes = Math.floor(duration.total("minutes")) % 60
-    const seconds = Math.floor(duration.total("seconds")) % 60
+    const totalSeconds = Math.max(0, Math.floor(duration.total("seconds")))
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
 
     time.value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
   }
@@ -71,6 +127,8 @@ function updateTime() {
 async function start() {
   const now = Temporal.Now.instant()
   startTime.value = now
+  activeStartTime.value = toTimeInputValue(now)
+  activeStartDate.value = formatDateInputValue(now)
 
   try {
     const data = await $fetch("/api/time-entries", {
@@ -114,6 +172,8 @@ async function stop() {
     startTime.value = null
     endTime.value = null
     activeTimeEntryId.value = null
+    activeStartTime.value = ""
+    activeStartDate.value = ""
     description.value = ""
     projectId.value = null
     time.value = "00:00:00"
@@ -167,7 +227,31 @@ async function resumeEntry(entry: { description: string | null; projectId: strin
             </div>
           </template>
         </DSelect>
-        <DInput type="time" step="1" v-model="time" class="tabular-nums" />
+        <template v-if="startTime">
+          <div class="flex shrink-0 items-center gap-1">
+            <span class="text-xs whitespace-nowrap text-neutral-400">Started</span>
+            <DInput type="time" step="1" v-model="activeStartTime" class="tabular-nums" @blur="saveActiveStartTime" />
+            <div class="relative flex items-center">
+              <button
+                type="button"
+                class="flex size-8 items-center justify-center rounded-md text-neutral-400 outline-none hover:bg-neutral-200 hover:text-neutral-600"
+                title="Change start date"
+                @click="openDatePicker"
+              >
+                <CalendarDaysIcon class="size-4" />
+              </button>
+              <input
+                ref="dateInputRef"
+                v-model="activeStartDate"
+                type="date"
+                class="pointer-events-none absolute left-0 h-0 w-0 opacity-0"
+                tabindex="-1"
+                @change="saveActiveStartDate"
+              />
+            </div>
+          </div>
+        </template>
+        <DInput type="text" inputmode="numeric" pattern="[0-9]{2,}:[0-9]{2}:[0-9]{2}" v-model="time" class="w-24 tabular-nums" readonly />
       </div>
       <div class="flex items-start justify-end gap-2 sm:items-center">
         <DButton v-if="!startTime" @click="start">Start</DButton>

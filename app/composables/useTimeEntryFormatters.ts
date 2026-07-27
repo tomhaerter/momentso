@@ -1,11 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill"
 
-function toInstant(dt: string | Date): Temporal.Instant {
+function toInstant(dt: string | Date | Temporal.Instant): Temporal.Instant {
+  if (dt instanceof Temporal.Instant) return dt
   return typeof dt === "string" ? Temporal.Instant.from(dt) : Temporal.Instant.fromEpochMilliseconds(dt.getTime())
 }
 
 export function useTimeEntryFormatters() {
-  function formatEntryTime(entry: { startTime?: string | Date | null; endTime?: string | Date | null }): string {
+  function formatEntryTime(entry: { startTime?: string | Date | Temporal.Instant | null; endTime?: string | Date | Temporal.Instant | null }): string {
     if (!entry.startTime || !entry.endTime) return ""
 
     const timeZone = Temporal.Now.timeZoneId()
@@ -18,7 +19,7 @@ export function useTimeEntryFormatters() {
     return `${startTime} - ${endTime}`
   }
 
-  function formatEntryDuration(entry: { startTime?: string | Date | null; endTime?: string | Date | null }): string {
+  function formatEntryDuration(entry: { startTime?: string | Date | Temporal.Instant | null; endTime?: string | Date | Temporal.Instant | null }): string {
     if (!entry.startTime || !entry.endTime) return ""
 
     const duration = toInstant(entry.endTime).since(toInstant(entry.startTime))
@@ -37,12 +38,12 @@ export function useTimeEntryFormatters() {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
   }
 
-  function getEntryDurationSeconds(entry: { startTime?: string | Date | null; endTime?: string | Date | null }): number {
+  function getEntryDurationSeconds(entry: { startTime?: string | Date | Temporal.Instant | null; endTime?: string | Date | Temporal.Instant | null }): number {
     if (!entry.startTime || !entry.endTime) return 0
     return Math.floor(toInstant(entry.endTime).since(toInstant(entry.startTime)).total("seconds"))
   }
 
-  function getEntryDate(entry: { startTime?: string | Date | null }): string {
+  function getEntryDate(entry: { startTime?: string | Date | Temporal.Instant | null }): string {
     if (!entry.startTime) return ""
     const timeZone = Temporal.Now.timeZoneId()
     const zdt = toInstant(entry.startTime).toZonedDateTimeISO(timeZone)
@@ -63,14 +64,14 @@ export function useTimeEntryFormatters() {
     return `${dayName}, ${monthDay}`
   }
 
-  function formatDateInputValue(dt: string | Date | null | undefined): string {
+  function formatDateInputValue(dt: string | Date | Temporal.Instant | null | undefined): string {
     if (!dt) return ""
     const timeZone = Temporal.Now.timeZoneId()
     const zdt = toInstant(dt).toZonedDateTimeISO(timeZone)
     return `${zdt.year}-${String(zdt.month).padStart(2, "0")}-${String(zdt.day).padStart(2, "0")}`
   }
 
-  function toTimeInputValue(dt: string | Date | null | undefined): string {
+  function toTimeInputValue(dt: string | Date | Temporal.Instant | null | undefined): string {
     if (!dt) return ""
     const timeZone = Temporal.Now.timeZoneId()
     const zdt = toInstant(dt).toZonedDateTimeISO(timeZone)
@@ -79,7 +80,7 @@ export function useTimeEntryFormatters() {
 
   // Apply a date (YYYY-MM-DD) to an existing datetime, returning ISO string
   function applyDateToEntry(
-    entry: { startTime?: string | Date | null; endTime?: string | Date | null },
+    entry: { startTime?: string | Date | Temporal.Instant | null; endTime?: string | Date | Temporal.Instant | null },
     dateValue: string
   ): { startTime: string | null; endTime: string | null } {
     const timeZone = Temporal.Now.timeZoneId()

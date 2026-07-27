@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Temporal } from "@js-temporal/polyfill"
-import { TrashIcon, PlayIcon } from "lucide-vue-next"
+import { TrashIcon, PlayIcon, CalendarDaysIcon } from "lucide-vue-next"
 
 interface TimeEntry {
   id: string
@@ -174,8 +174,25 @@ function resumeEntry(entry: TimeEntry) {
 
 const menuItems = [{ label: "Delete", icon: TrashIcon, danger: true }]
 
+function openDatePicker(event: MouseEvent) {
+  const container = event.currentTarget as HTMLElement
+  const el = container.parentElement?.querySelector<HTMLInputElement>('input[type="date"]')
+  if (!el) return
+  if (typeof el.showPicker === "function") {
+    try {
+      el.showPicker()
+    } catch {
+      el.focus()
+    }
+  } else {
+    el.focus()
+  }
+}
+
 const inputClass =
   "tabular-nums w-28 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-neutral-700 outline-none hover:border-neutral-200 focus:border-transparent focus:ring-2 focus:ring-blue-600 h-8"
+
+const dateInputClass = "pointer-events-none absolute left-0 h-0 w-0 opacity-0"
 </script>
 
 <template>
@@ -249,6 +266,26 @@ const inputClass =
               :class="inputClass"
               @blur="saveTime(entry, 'endTime')"
             />
+
+            <!-- Change date for this entry -->
+            <div class="relative flex items-center">
+              <button
+                type="button"
+                class="flex size-8 items-center justify-center rounded-md text-neutral-400 outline-none hover:bg-neutral-200 hover:text-neutral-600"
+                title="Change date"
+                @click="openDatePicker"
+              >
+                <CalendarDaysIcon class="size-4" />
+              </button>
+              <input
+                v-if="editValues[entry.id]"
+                v-model="editValues[entry.id]!.date"
+                type="date"
+                :class="dateInputClass"
+                tabindex="-1"
+                @change="saveDate(entry)"
+              />
+            </div>
           </div>
 
           <!-- Duration -->
