@@ -244,6 +244,7 @@ async function resumeEntry(entry: { description: string | null; projectId: strin
         </DSelect>
         <div v-if="startTime" class="flex shrink-0 items-center gap-0.5">
           <span class="pr-1 text-xs whitespace-nowrap text-neutral-400">Started</span>
+          <DDatePicker v-model="activeStartDate" label="Choose start date" @change="saveActiveStart" />
           <input
             v-model="activeStartTime"
             type="text"
@@ -256,7 +257,6 @@ async function resumeEntry(entry: { description: string | null; projectId: strin
             class="h-8 w-24 rounded-md border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 tabular-nums outline-none focus:border-transparent focus:ring-2 focus:ring-blue-600"
             @blur="saveActiveStart"
           />
-          <DDatePicker v-model="activeStartDate" label="Choose start date" @change="saveActiveStart" />
         </div>
         <output
           class="flex h-8 w-24 shrink-0 items-center rounded-md border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 tabular-nums"
