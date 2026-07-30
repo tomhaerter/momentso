@@ -11,6 +11,10 @@ const counter = useInterval(1000, {
 })
 
 const time = ref("00:00:00")
+const activeStartTime = ref("")
+const activeStartDate = ref("")
+
+const { formatDateInputValue, toTimeInputValue, localDateTimeInputToInstant } = useTimeEntryFormatters()
 
 const activeTimeEntryId = ref<string | null>(null)
 
@@ -41,6 +45,8 @@ if (activeTimers.value && activeTimers.value.length > 0) {
 
     if (activeTimer.startTime) {
       startTime.value = Temporal.Instant.from(activeTimer.startTime)
+      activeStartTime.value = toTimeInputValue(activeTimer.startTime)
+      activeStartDate.value = formatDateInputValue(activeTimer.startTime)
     }
   }
 }
@@ -48,6 +54,9 @@ if (activeTimers.value && activeTimers.value.length > 0) {
 watch(counter, () => {
   updateTime()
 })
+
+// Initialize immediately so a hydrated long-running timer shows its elapsed time
+updateTime()
 
 onMounted(() => {
   nextTick(() => {
@@ -60,9 +69,10 @@ function updateTime() {
     const now = endTime.value || Temporal.Now.instant()
     const duration = now.since(startTime.value)
 
-    const hours = Math.floor(duration.total("hours"))
-    const minutes = Math.floor(duration.total("minutes")) % 60
-    const seconds = Math.floor(duration.total("seconds")) % 60
+    const totalSeconds = Math.max(0, Math.floor(duration.total("seconds")))
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
 
     time.value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
   }
@@ -71,6 +81,8 @@ function updateTime() {
 async function start() {
   const now = Temporal.Now.instant()
   startTime.value = now
+  activeStartTime.value = toTimeInputValue(now)
+  activeStartDate.value = formatDateInputValue(now)
 
   try {
     const data = await $fetch("/api/time-entries", {
@@ -88,11 +100,15 @@ async function start() {
   } catch (error) {
     console.error("Failed to create time entry:", error)
     startTime.value = null
+    activeStartTime.value = ""
+    activeStartDate.value = ""
   }
 }
 
 async function stop() {
   if (!activeTimeEntryId.value) return
+
+  await saveActiveStart()
 
   const now = Temporal.Now.instant()
   endTime.value = now
@@ -113,6 +129,8 @@ async function stop() {
     // Reset state
     startTime.value = null
     endTime.value = null
+    activeStartTime.value = ""
+    activeStartDate.value = ""
     activeTimeEntryId.value = null
     description.value = ""
     projectId.value = null
@@ -120,6 +138,63 @@ async function stop() {
   } catch (error) {
     console.error("Failed to stop time entry:", error)
     endTime.value = null
+  }
+}
+
+let activeStartSavePromise: Promise<void> | null = null
+
+async function saveActiveStart() {
+  if (!activeTimeEntryId.value || !startTime.value) return
+
+  const timeValue = activeStartTime.value
+  const dateValue = activeStartDate.value
+  const editStillMatches = () => activeStartTime.value === timeValue && activeStartDate.value === dateValue
+  const resetEditValue = (value: Temporal.Instant) => {
+    if (!editStillMatches()) return
+    activeStartTime.value = toTimeInputValue(value)
+    activeStartDate.value = formatDateInputValue(value)
+  }
+
+  if (activeStartSavePromise) await activeStartSavePromise
+
+  const isoValue = localDateTimeInputToInstant(dateValue, timeValue)
+  if (!isoValue) {
+    resetEditValue(startTime.value)
+    return
+  }
+
+  const nextStartTime = Temporal.Instant.from(isoValue)
+  if (nextStartTime.equals(startTime.value)) {
+    resetEditValue(nextStartTime)
+    return
+  }
+
+  // Reject edits that would start the running timer in the future
+  if (Temporal.Instant.compare(nextStartTime, Temporal.Now.instant()) > 0) {
+    resetEditValue(startTime.value)
+    return
+  }
+
+  const entryId = activeTimeEntryId.value
+  activeStartSavePromise = (async () => {
+    try {
+      await $fetch(`/api/time-entries/${entryId}`, {
+        method: "PUT",
+        body: { startTime: isoValue }
+      })
+      startTime.value = nextStartTime
+      resetEditValue(nextStartTime)
+      updateTime()
+    } catch (error) {
+      console.error("Failed to save start date and time:", error)
+      if (startTime.value) resetEditValue(startTime.value)
+    }
+  })()
+
+  try {
+    await activeStartSavePromise
+  } finally {
+    activeStartSavePromise = null
   }
 }
 
@@ -167,7 +242,28 @@ async function resumeEntry(entry: { description: string | null; projectId: strin
             </div>
           </template>
         </DSelect>
-        <DInput type="time" step="1" v-model="time" class="tabular-nums" />
+        <div v-if="startTime" class="flex shrink-0 items-center gap-0.5">
+          <span class="pr-1 text-xs whitespace-nowrap text-neutral-400">Started</span>
+          <input
+            v-model="activeStartTime"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            aria-label="Start time in 24-hour format"
+            title="Start time"
+            placeholder="00:00:00"
+            pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?"
+            class="h-8 w-24 rounded-md border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 tabular-nums outline-none focus:border-transparent focus:ring-2 focus:ring-blue-600"
+            @blur="saveActiveStart"
+          />
+          <DDatePicker v-model="activeStartDate" label="Choose start date" @change="saveActiveStart" />
+        </div>
+        <output
+          class="flex h-8 w-24 shrink-0 items-center rounded-md border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 tabular-nums"
+          aria-label="Elapsed time"
+        >
+          {{ time }}
+        </output>
       </div>
       <div class="flex items-start justify-end gap-2 sm:items-center">
         <DButton v-if="!startTime" @click="start">Start</DButton>
