@@ -264,6 +264,7 @@ const inputClass =
           <div class="hidden items-center gap-1.5 lg:flex">
             <!-- Start time -->
             <div v-if="editValues[entry.id]" class="flex items-center gap-0.5">
+              <DDatePicker v-model="editValues[entry.id]!.startDate" label="Choose start date" @change="saveDateTime(entry, 'startTime')" />
               <input
                 v-model="editValues[entry.id]!.start"
                 type="text"
@@ -275,13 +276,13 @@ const inputClass =
                 :class="inputClass"
                 @blur="saveDateTime(entry, 'startTime')"
               />
-              <DDatePicker v-model="editValues[entry.id]!.startDate" label="Choose start date" @change="saveDateTime(entry, 'startTime')" />
             </div>
 
             <span class="text-sm text-neutral-400">-</span>
 
             <!-- End time -->
             <div v-if="editValues[entry.id]" class="flex items-center gap-0.5">
+              <DDatePicker v-model="editValues[entry.id]!.endDate" label="Choose end date" @change="saveDateTime(entry, 'endTime')" />
               <input
                 v-model="editValues[entry.id]!.end"
                 type="text"
@@ -293,7 +294,6 @@ const inputClass =
                 :class="inputClass"
                 @blur="saveDateTime(entry, 'endTime')"
               />
-              <DDatePicker v-model="editValues[entry.id]!.endDate" label="Choose end date" @change="saveDateTime(entry, 'endTime')" />
             </div>
           </div>
 
