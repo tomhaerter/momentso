@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build the Nuxt app ----
-FROM node:26-alpine AS build
+FROM node:26.12.1-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build
 
 # ---- Runtime ----
-FROM node:26-alpine
+FROM node:26.12.1-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
